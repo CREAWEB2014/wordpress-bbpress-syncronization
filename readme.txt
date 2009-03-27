@@ -3,7 +3,7 @@ Contributors: bobrik
 Tags: bbPress, post, comment, integration
 Requires at least: 2.6.0
 Tested up to: 2.6.5
-Stable tag: 0.1
+Stable tag: 0.2
 
 Sync your WordPress comments to bbPress forum and back.
 
@@ -47,3 +47,10 @@ YOU MAY HELP:
 *   Bug reporting
 
 Made for news.vitebsk.cc
+
+== Changelog ==
+
+Version 0.2 (27.03.2008):
+
+*   Showing post excerpt in bbPress topic beginning
+*   Optional quoting first post in topic
