@@ -3,7 +3,7 @@ Contributors: bobrik
 Tags: bbPress, post, comment, integration
 Requires at least: 2.6.0
 Tested up to: 2.6.5
-Stable tag: 0.1
+Stable tag: 0.2
 
 Sync your WordPress comments to bbPress forum and back.
 
@@ -31,13 +31,14 @@ DONE:
 *   Settings page
 *   Syncronizing plugin status in WordPress and bbPress
 *   bbPress forum selection
+*   Showing post excerpt in bbPress topic beginning
+*   Optional quoting first post in topic
 
 TODO:
 
 *   Catch post deletion in WordPress
 *   Catch topic deletion in bbPress
 *   WordPress anonymous user info sycronization
-*   Showing post excerpt in bbPress topic beginning
 
 YOU MAY HELP:
 
@@ -46,3 +47,10 @@ YOU MAY HELP:
 *   Bug reporting
 
 Made for news.vitebsk.cc
+
+== Changelog ==
+
+Version 0.2 (27.03.2008):
+
+*   Showing post excerpt in bbPress topic beginning
+*   Optional quoting first post in topic
