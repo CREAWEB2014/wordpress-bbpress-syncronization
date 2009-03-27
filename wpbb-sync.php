@@ -57,7 +57,8 @@ function afterpost($id)
 	$post = get_post($comment->comment_post_ID);
 	if ($post->comment_count == 1) {
 		// first comment we must create topic in forum
-		create_bb_topic($post, $comment);
+		create_bb_topic($post);
+		continue_bb_topic($post, $comment);
 	} else
 	{
 		// continuing discussion on forum
@@ -95,7 +96,8 @@ function afteredit($id)
 			if (get_real_comment_status($comment->comment_ID)  == 1)
 			{
 				// first post, creating topic
-				create_bb_topic($post, $comment);
+				create_bb_topic($post);
+				continue_bb_topic($post, $comment);
 			}
 		}
 	}
@@ -142,6 +144,7 @@ function afterpostedit($id)
 	if ($row)
 	{
 		edit_bb_tags($id, $row['bb_topic_id']);
+		edit_bb_first_post($id);
 	}
 }
 
@@ -155,25 +158,32 @@ function get_real_comment_status($id)
 
 // ===== start of bb functions =====
 
-function create_bb_topic($post, $comment)
+function create_bb_topic($post)
 {
 	$tags = array();
 	foreach (wp_get_post_tags($post->ID) as $tag)
 	{
 		$tags[] = $tag->name;
 	}
+	$morepos = strpos($post->post_content, '<!--more-->');
+	$post_content = $morepos === false ? $post->post_content : substr($post->post_content, 0, $morepos);
+	if (get_option('wpbb_quote_first_post') == 'enabled')
+	{
+		$post_content = '<blockquote>'.$post_content.'</blockquote>';
+	}
+	$post_content .= '<br/><a href="'.get_permalink($post->ID).'">'.__("Continue &#187;").'</a>';
 	$request = array(
 		'action' => 'create_topic',
 		'topic' => $post->post_title,
-		'post_content' => $comment->comment_content,
+		'post_content' => $post_content,
 		'tags' => implode(', ', $tags),
 		'post_id' => $post->ID,
-		'comment_id' => $comment->comment_ID,
-		'comment_approved' => get_real_comment_status($comment->comment_ID)
+		'comment_id' => 0,
+		'comment_approved' => 1
 	);
 	$answer = send_command($request);
 	$data = unserialize($answer);
-	return add_table_item($post->ID, $comment->comment_ID, $data['topic_id'], $data['post_id']);
+	return add_table_item($post->ID, 0, $data['topic_id'], $data['post_id']);
 }
 
 function continue_bb_topic($post, $comment)
@@ -199,8 +209,28 @@ function edit_bb_post($post, $comment)
 		'comment_id' => $comment->comment_ID,
 		'comment_approved' => get_real_comment_status($comment->comment_ID)
 	);
-	$answer = send_command($request);
-	echo $answer;
+	send_command($request);
+}
+
+function edit_bb_first_post($post_id)
+{
+	$post = get_post($post_id, ARRAY_A);
+	$morepos = strpos($post['post_content'], '<!--more-->');
+	$post_content = $morepos === false ? $post['post_content'] : substr($post['post_content'], 0, $morepos);
+	if (get_option('wpbb_quote_first_post') == 'enabled')
+	{
+		$post_content = '<blockquote>'.$post_content.'</blockquote>';
+	}
+	$post_content .= '<br/><a href="'.get_permalink($post['ID']).'">'.__("Continue &#187;").'</a>';
+	$request = array(
+		'action' => 'edit_post',
+		'get_row_by' => 'wp_post',
+		'post_content' => $post_content,
+		'post_id' => $post['ID'],
+		'comment_id' => 0, // post, not a comment
+		'comment_approved' => 1 // approved
+	);
+	send_command($request);
 }
 
 function close_bb_topic($topic)
@@ -253,6 +283,12 @@ function edit_bb_tags($wp_post, $bb_topic)
 		'tags' => implode(', ', $tags)
 	);
 	send_command($request);
+}
+
+function get_bb_topic_first_post($post_id)
+{
+	global $wpdb;
+	return $wpdb->get_var("SELECT bb_post_id FROM ".$wpdb->prefix."wpbb_ids WHERE wp_post_id = $post_id ORDER BY bb_post_id ASC LIMIT 1");
 }
 
 // ===== end of bb functions =====
@@ -353,17 +389,21 @@ function edit_wp_tags()
 function send_command($pairs)
 {
 	$url = get_option('wpbb_bbpress_url').'my-plugins/wordpress-bbpress-syncronization/bbwp-sync.php';
-	global $user_ID;
-	global $user_login;
-	get_currentuserinfo();
-	if ($user_ID)
+	// FIXME: do we alse need to set username?
+	if (!isset($pairs['user']))
 	{
-		$pairs['user'] = $user_ID;
-		$pairs['username'] = $user_login;
-	} else
-	{
-		// anonymous user
-		$pairs['user'] = -1;
+		global $user_ID;
+		global $user_login;
+		get_currentuserinfo();
+		if ($user_ID)
+		{
+			$pairs['user'] = $user_ID;
+			$pairs['username'] = $user_login;
+		} else
+		{
+			// anonymous user
+			$pairs['user'] = -1;
+		}
 	}
 	$ch = curl_init($url);
 	curl_setopt ($ch, CURLOPT_POST, 1);
@@ -580,6 +620,7 @@ function wpbb_config() {
 		update_option('wpbb_bbpress_url', $_POST['bbpress_url']);
 		update_option('wpbb_secret_key', $_POST['secret_key']);
 		$_POST['plugin_status'] == 'on' ? set_global_plugin_status('enabled') : set_global_plugin_status('disabled');
+		$_POST['enable_quoting'] == 'on' ? update_option('wpbb_quote_first_post', 'enabled') : update_option('wpbb_quote_first_post', 'disabled');
 	}
 
 ?>
@@ -631,11 +672,16 @@ function wpbb_config() {
 			</td>
 		</tr>
 		<tr valign="baseline">
+			<th scope="row"><?php _e('Enable quoting', $textdomain); ?></th>
+			<td>
+				<input type="checkbox" name="enable_quoting"<?php echo (get_option('wpbb_quote_first_post') == 'enabled') ? ' checked="checked"' : '';?> /> (If enabled, first post summary in bbPress will be blockquoted)
+			</td>
+		</tr>
+		<tr valign="baseline">
 			<th scope="row"><?php _e('Enable plugin', $textdomain); ?></th>
 			<td><?php $check = check_wpbb_settings(); ?>
 				<input type="checkbox" name="plugin_status"<?php echo (get_option('wpbb_plugin_status') == 'enabled') ? ' checked="checked"' : ''; echo ($check['code'] == 0) ? '' : ' disabled="disabled"'; ?> /> (<?php echo ($check['code'] == 0) ? 'Allowed by both parts' : 'Not allowed: '.$check['message'] ?>)
 			</td>
-		</tr>
 		</tr>
 	</table>
 	<p class="submit">
