@@ -3,7 +3,7 @@
 Plugin Name: WordPress-bbPress syncronization
 Plugin URI: http://bobrik.name/
 Description: Sync your WordPress comments to bbPress forum and back.
-Version: 0.2
+Version: 0.3
 Author: Ivan Babrou <ibobrik@gmail.com>
 Author URI: http://bobrik.name/
 
@@ -171,7 +171,7 @@ function create_bb_topic($post)
 	{
 		$post_content = '<blockquote>'.$post_content.'</blockquote>';
 	}
-	$post_content .= '<br/><a href="'.get_permalink($post->ID).'">'.__("Continue &#187;").'</a>';
+	$post_content .= '<br/><a href="'.get_permalink($post->ID).'">'.$post->post_title.'</a>';
 	$request = array(
 		'action' => 'create_topic',
 		'topic' => $post->post_title,
@@ -221,7 +221,7 @@ function edit_bb_first_post($post_id)
 	{
 		$post_content = '<blockquote>'.$post_content.'</blockquote>';
 	}
-	$post_content .= '<br/><a href="'.get_permalink($post['ID']).'">'.__("Continue &#187;").'</a>';
+	$post_content .= '<br/><a href="'.get_permalink($post['ID']).'">'.$post['post_title'].'</a>';
 	$request = array(
 		'action' => 'edit_post',
 		'get_row_by' => 'wp_post',
