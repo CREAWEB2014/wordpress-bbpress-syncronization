@@ -225,6 +225,7 @@ function edit_bb_first_post($post_id)
 	$request = array(
 		'action' => 'edit_post',
 		'get_row_by' => 'wp_post',
+		'topic_title' => $post['post_title'], // editing topic title
 		'post_content' => $post_content,
 		'post_id' => $post['ID'],
 		'comment_id' => 0, // post, not a comment
