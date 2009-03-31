@@ -3,7 +3,7 @@
 Plugin Name: WordPress-bbPress syncronization
 Plugin URI: http://bobrik.name/
 Description: Sync your WordPress comments to bbPress forum and back.
-Version: 0.4
+Version: 0.4.1
 Author: Ivan Babrou <ibobrik@gmail.com>
 Author URI: http://bobrik.name/
 
@@ -55,7 +55,7 @@ function afterpost($id)
 		return;
 	}
 	$post = get_post($comment->comment_post_ID);
-	if (get_post_meta($post->ID, 'wpbb_sync_comments', true) != 'yes')
+	if (!is_enabled_for_post($post->ID))
 		return; // sync disabled for that post
 	if ($post->comment_count == 1) {
 		// first comment we must create topic in forum
@@ -81,7 +81,7 @@ function afteredit($id)
 	}
 	$comment = get_comment($id);
 	$post = get_post($comment->comment_post_ID);
-	if (get_post_meta($post->ID, 'wpbb_sync_comments', true) != 'yes')
+	if (!is_enabled_for_post($post->ID))
 		return; // sync disabled for that post
 	$row = get_table_item('wp_post_id', $post->ID);
 	if ($row)
@@ -112,7 +112,7 @@ function afterstatuschange($id)
 	// TODO: migrate to afterpostedit
 	if (!wpbb_do_sync())
 		return;
-	if (get_post_meta($id, 'wpbb_sync_comments', true) != 'yes')
+	if (!is_enabled_for_post($id))
 		return; // sync disabled for that post
 	$post = get_post($id);
 	$row = get_table_item('wp_post_id', $post->ID);
@@ -133,7 +133,7 @@ function afterpostedit($id)
 {
 	if (!wpbb_do_sync())
 		return;
-	if (get_post_meta($id, 'wpbb_sync_comments', true) != 'yes')
+	if (!is_enabled_for_post($id))
 		return; // sync disabled for that post
 	$row = get_table_item('wp_post_id', $id);
 	if ($row)
@@ -160,6 +160,15 @@ function wpbb_do_sync()
 		// we don't need endless loop ;)
 		return false;
 	return true; // everything is ok ;)
+}
+
+function is_enabled_for_post($post_id)
+{
+	if (get_post_meta($post_id, 'wpbb_sync_comments', true) == 'yes')
+		return true; // sync enabled for that post
+	elseif (get_option('wpbb_sync_by_default') == 'enabled' && get_post_meta($post_id, 'wpbb_sync_comments', true) != 'no')
+		return true; // sync enabled for that post
+	return false; // sync disabled for that post
 }
 
 // ===== start of bb functions =====
@@ -305,13 +314,14 @@ function get_bb_topic_first_post($post_id)
 function edit_wp_comment()
 {
 	$comment = get_comment($id);
-	if (get_post_meta($comment->comment_post_ID, 'wpbb_sync_comments', true) != 'yes')
+	if (!is_enabled_for_post($comment->comment_post_ID))
 		return; // sync disabled for that post
 	$new_info = array(
 		'comment_ID' => $_POST['comment_id'],
 		'comment_content' => $_POST['post_text'],
 		'comment_approved' => status_bb2wp($_POST['post_status'])
 	);
+	remove_all_filters('comment_save_pre');
 	wp_update_comment($new_info);
 }
 
@@ -320,7 +330,7 @@ function add_wp_comment()
 	// NOTE: wordpress have something very strange with users
 	// everyone cant have an registered id and different display_name
 	// and other info for posts. strange? i think so ;)
-	if (get_post_meta($_POST['wp_post_id'], 'wpbb_sync_comments', true) != 'yes')
+	if (!is_enabled_for_post($_POST['wp_post_id']))
 		return; // sync disabled for that post
 	global $current_user;
 	get_currentuserinfo();
@@ -342,7 +352,7 @@ function add_wp_comment()
 
 function close_wp_comments()
 {
-	if (get_post_meta($_POST['post_id'], 'wpbb_sync_comments', true) != 'yes')
+	if (!is_enabled_for_post($_POST['post_id']))
 		return; // sync disabled for that post
 	global $wpdb;
 	$wpdb->query('UPDATE '.$wpdb->prefix.'posts SET comment_status = \'closed\' WHERE ID = '.$_POST['post_id']);
@@ -350,7 +360,7 @@ function close_wp_comments()
 
 function open_wp_comments()
 {
-	if (get_post_meta($_POST['post_id'], 'wpbb_sync_comments', true) != 'yes')
+	if (!is_enabled_for_post($_POST['post_id']))
 		return; // sync disabled for that post
 	global $wpdb;
 	$wpdb->query('UPDATE '.$wpdb->prefix.'posts SET comment_status = \'open\' WHERE ID = '.$_POST['post_id']);
@@ -621,7 +631,8 @@ function status_bb2wp($status)
 		return 'spam'; // spam
 }
 
-function options_page() {
+function options_page()
+{
 	if (function_exists('add_submenu_page'))
 	{
 		add_submenu_page('plugins.php', __('bbPress syncronization'), __('bbPress syncronization'), 'manage_options', 'wpbb-config', 'wpbb_config');
@@ -637,6 +648,7 @@ function wpbb_config() {
 		update_option('wpbb_secret_key', $_POST['secret_key']);
 		$_POST['plugin_status'] == 'on' ? set_global_plugin_status('enabled') : set_global_plugin_status('disabled');
 		$_POST['enable_quoting'] == 'on' ? update_option('wpbb_quote_first_post', 'enabled') : update_option('wpbb_quote_first_post', 'disabled');
+		$_POST['sync_by_default'] == 'on' ? update_option('wpbb_sync_by_default', 'enabled') : update_option('wpbb_sync_by_default', 'disabled');
 	}
 
 ?>
@@ -685,6 +697,12 @@ function wpbb_config() {
 					}
 				}
 				?>
+			</td>
+		</tr>
+		<tr valign="baseline">
+			<th scope="row"><?php _e('Sync comments by default', $textdomain); ?></th>
+			<td>
+				<input type="checkbox" name="sync_by_default"<?php echo (get_option('wpbb_sync_by_default') == 'enabled') ? ' checked="checked"' : '';?> /> (Also will be used for posts without any sync option value)
 			</td>
 		</tr>
 		<tr valign="baseline">
