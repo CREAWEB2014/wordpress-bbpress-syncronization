@@ -38,25 +38,18 @@ function add_textdomain()
 
 function afterpost($id)
 {
-	if (get_option('wpbb_plugin_status') != 'enabled')
-		return;
 	// error_log("wordpress: afterpost");
-	global $wpbb_plugin;
-	if (!$wpbb_plugin)
-	{
-		// we don't need endless loop ;)
+	if (!wpbb_do_sync())
 		return;
-	}
 	$comment = get_comment($id);
-	if ($comment->comment_approved  != 1)
-	{
-		// spam or not approved
-		// 'cause of comment_count counts only approved comments
-		return;
-	}
 	$post = get_post($comment->comment_post_ID);
 	if (!is_enabled_for_post($post->ID))
 		return; // sync disabled for that post
+	if ($comment->comment_approved != 1)
+	{
+		// spam or not approved and first post. better add it later
+		return;
+	}
 	if ($post->comment_count == 1) {
 		// first comment we must create topic in forum
 		create_bb_topic($post);
@@ -70,20 +63,14 @@ function afterpost($id)
 
 function afteredit($id)
 {
-	if (get_option('wpbb_plugin_status') != 'enabled')
-		return;
 	// error_log("wordpress: afteredit");
-	global $wpbb_plugin;
-	if (!$wpbb_plugin)
-	{
-		// we don't need endless loop ;)
+	if (!wpbb_do_sync())
 		return;
-	}
 	$comment = get_comment($id);
 	$post = get_post($comment->comment_post_ID);
 	if (!is_enabled_for_post($post->ID))
 		return; // sync disabled for that post
-	$row = get_table_item('wp_post_id', $post->ID);
+	$row = get_table_item('wp_comment_id', $comment->comment_ID);
 	if ($row)
 	{
 		// have it in database, must sync
@@ -97,7 +84,7 @@ function afteredit($id)
 		} else
 		{
 			// create topic  only if approved
-			if (get_real_comment_status($comment->comment_ID)  == 1)
+			if (get_real_comment_status($comment->comment_ID) == 1)
 			{
 				// first post, creating topic
 				create_bb_topic($post);
@@ -208,6 +195,10 @@ function continue_bb_topic($post, $comment)
 		'post_content' => apply_filters('comment_text', $comment->comment_content),
 		'post_id' => $post->ID,
 		'comment_id' => $comment->comment_ID,
+		'user' => $comment->user_id,
+		'comment_author' => $comment->comment_author,
+		'comment_author_email' => $comment->comment_author_email,
+		'comment_author_url' => $comment->comment_author_url,
 		'comment_approved' => get_real_comment_status($comment->comment_ID)
 	);
 	$answer = send_command($request);
@@ -222,6 +213,7 @@ function edit_bb_post($post, $comment)
 		'post_content' => apply_filters('comment_text', $comment->comment_content),
 		'post_id' => $post->ID,
 		'comment_id' => $comment->comment_ID,
+		'user' => $comment->user_id,
 		'comment_approved' => get_real_comment_status($comment->comment_ID)
 	);
 	send_command($request);
@@ -244,6 +236,7 @@ function edit_bb_first_post($post_id)
 		'post_content' => apply_filters('the_content', $post_content),
 		'post_id' => $post['ID'],
 		'comment_id' => 0, // post, not a comment
+		'user' => $comment->user_id,
 		'comment_approved' => 1 // approved
 	);
 	send_command($request);
@@ -428,7 +421,7 @@ function send_command($pairs)
 		} else
 		{
 			// anonymous user
-			$pairs['user'] = -1;
+			$pairs['user'] = 0;
 		}
 	}
 	$ch = curl_init($url);
@@ -746,8 +739,9 @@ function wpbb_post_options()
 		$yes = 'checked="checked"';
 		$no = '';
 	}
-	echo '<input type="radio" name="wpbb_sync_comments" id="wpbb_sync_comments" value="yes" '.$yes.' /><label for="wpbb_sync_comments_yes">Yes</label> &nbsp;&nbsp;
+	echo '<input type="radio" name="wpbb_sync_comments" id="wpbb_sync_comments_yes" value="yes" '.$yes.' /><label for="wpbb_sync_comments_yes">Yes</label> &nbsp;&nbsp;
 		<input type="radio" name="wpbb_sync_comments" id="wpbb_sync_comments_no" value="no" '.$no.' /> <label for="wpbb_sync_comments_no">No</label>';
+	echo '</p></div></div>';
 }
 
 function wpbb_store_post_options($post_id)
@@ -769,6 +763,7 @@ add_action('edit_comment', 'afteredit');
 add_action('wp_set_comment_status', 'afteredit');
 add_action('edit_post', 'afterpostedit');
 add_action('edit_post', 'afterstatuschange');
+add_action('wp_set_comment_status', 'afteredit');
 add_action('admin_menu', 'options_page');
 register_activation_hook('wordpress-bbpress-syncronization/wpbb-sync.php', 'wpbb_install');
 add_action('edit_form_advanced', 'wpbb_post_options');

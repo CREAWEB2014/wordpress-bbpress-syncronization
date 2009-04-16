@@ -54,6 +54,13 @@ Made for news.vitebsk.cc
 
 == Changelog ==
 
+Version 0.4.2
+
+*   Fixed bug with WordPress post page markup
+*   Added Copyright to bbPress part
+*   Code cleanups
+*   Showing anonymous user info in bbPress (optionally)
+
 Version 0.4.1 (31.04.2008):
 
 *   Added option for default comments syncronization status setting
