@@ -3,7 +3,7 @@
 Plugin Name: WordPress-bbPress syncronization
 Plugin URI: http://bobrik.name/
 Description: Sync your WordPress comments to bbPress forum and back.
-Version: 0.4.1
+Version: 0.4.2
 Author: Ivan Babrou <ibobrik@gmail.com>
 Author URI: http://bobrik.name/
 
@@ -38,22 +38,10 @@ function add_textdomain()
 
 function afterpost($id)
 {
-	if (get_option('wpbb_plugin_status') != 'enabled')
+	//error_log("wordpress: afterpost");
+	if (!wpbb_do_sync())
 		return;
-	// error_log("wordpress: afterpost");
-	global $wpbb_plugin;
-	if (!$wpbb_plugin)
-	{
-		// we don't need endless loop ;)
-		return;
-	}
 	$comment = get_comment($id);
-	if ($comment->comment_approved  != 1)
-	{
-		// spam or not approved
-		// 'cause of comment_count counts only approved comments
-		return;
-	}
 	$post = get_post($comment->comment_post_ID);
 	if (!is_enabled_for_post($post->ID))
 		return; // sync disabled for that post
@@ -61,7 +49,7 @@ function afterpost($id)
 		// first comment we must create topic in forum
 		create_bb_topic($post);
 		continue_bb_topic($post, $comment);
-	} else
+	} elseif (sync_that_status($comment->comment_ID))
 	{
 		// continuing discussion on forum
 		continue_bb_topic($post, $comment);
@@ -70,34 +58,28 @@ function afterpost($id)
 
 function afteredit($id)
 {
-	if (get_option('wpbb_plugin_status') != 'enabled')
+	//error_log("wordpress: afteredit");
+	if (!wpbb_do_sync())
 		return;
-	// error_log("wordpress: afteredit");
-	global $wpbb_plugin;
-	if (!$wpbb_plugin)
-	{
-		// we don't need endless loop ;)
-		return;
-	}
 	$comment = get_comment($id);
 	$post = get_post($comment->comment_post_ID);
 	if (!is_enabled_for_post($post->ID))
 		return; // sync disabled for that post
-	$row = get_table_item('wp_post_id', $post->ID);
+	$row = get_table_item('wp_comment_id', $comment->comment_ID);
 	if ($row)
 	{
 		// have it in database, must sync
 		edit_bb_post($post, $comment);
 	} else
 	{
-		if ($post->comment_count > 1)
+		if ($post->comment_count > 1 && sync_that_status($comment->comment_ID))
 		{
 			// comment status changed, now just like new comment
 			continue_bb_topic($post, $comment);
 		} else
 		{
 			// create topic  only if approved
-			if (get_real_comment_status($comment->comment_ID)  == 1)
+			if (get_real_comment_status($comment->comment_ID) == 1)
 			{
 				// first post, creating topic
 				create_bb_topic($post);
@@ -107,9 +89,21 @@ function afteredit($id)
 	}
 }
 
+function afterdelete($id)
+{
+	//error_log('wordpress: afterdelete');
+	delete_table_item('wp_comment_id', $id);
+	$request = array(
+		'action' => 'delete_post',
+		'comment_id' => $id
+	);
+	$answer = send_command($request);
+	remove_action('wp_set_comment_status', 'afteredit');
+}
+
 function afterstatuschange($id)
 {
-	// TODO: migrate to afterpostedit
+	//error_log('wordpress: afterstatuschange');
 	if (!wpbb_do_sync())
 		return;
 	if (!is_enabled_for_post($id))
@@ -131,6 +125,7 @@ function afterstatuschange($id)
 
 function afterpostedit($id)
 {
+	//error_log('wordpress: afterpostedit');
 	if (!wpbb_do_sync())
 		return;
 	if (!is_enabled_for_post($id))
@@ -145,7 +140,7 @@ function afterpostedit($id)
 
 function get_real_comment_status($id)
 {
-	// FIXME: remove that shit! it must work original way fine
+	// FIXME: remove that shit! it must work original way fine. Really must? ;)
 	global $wpdb;
 	$comment = get_comment($id);
 	return $wpdb->get_var('SELECT comment_approved FROM '.$wpdb->prefix.'comments WHERE comment_id = '.$id);
@@ -160,6 +155,14 @@ function wpbb_do_sync()
 		// we don't need endless loop ;)
 		return false;
 	return true; // everything is ok ;)
+}
+
+function sync_that_status($id)
+{
+	if (get_real_comment_status($id) == 1 || get_option('wpbb_sync_all_comments') == 'enabled')
+		return true;
+	else
+		return false;
 }
 
 function is_enabled_for_post($post_id)
@@ -208,6 +211,10 @@ function continue_bb_topic($post, $comment)
 		'post_content' => apply_filters('comment_text', $comment->comment_content),
 		'post_id' => $post->ID,
 		'comment_id' => $comment->comment_ID,
+		'user' => $comment->user_id,
+		'comment_author' => $comment->comment_author,
+		'comment_author_email' => $comment->comment_author_email,
+		'comment_author_url' => $comment->comment_author_url,
 		'comment_approved' => get_real_comment_status($comment->comment_ID)
 	);
 	$answer = send_command($request);
@@ -222,6 +229,10 @@ function edit_bb_post($post, $comment)
 		'post_content' => apply_filters('comment_text', $comment->comment_content),
 		'post_id' => $post->ID,
 		'comment_id' => $comment->comment_ID,
+		'user' => $comment->user_id,
+		'comment_author' => $comment->comment_author,
+		'comment_author_email' => $comment->comment_author_email,
+		'comment_author_url' => $comment->comment_author_url,
 		'comment_approved' => get_real_comment_status($comment->comment_ID)
 	);
 	send_command($request);
@@ -244,6 +255,7 @@ function edit_bb_first_post($post_id)
 		'post_content' => apply_filters('the_content', $post_content),
 		'post_id' => $post['ID'],
 		'comment_id' => 0, // post, not a comment
+		'user' => $comment->user_id,
 		'comment_approved' => 1 // approved
 	);
 	send_command($request);
@@ -428,7 +440,7 @@ function send_command($pairs)
 		} else
 		{
 			// anonymous user
-			$pairs['user'] = -1;
+			$pairs['user'] = 0;
 		}
 	}
 	$ch = curl_init($url);
@@ -571,30 +583,22 @@ function wpbb_install()
 	global $wpdb;
 	$wpbb_sync_db_version = 0.2;
 	$table = $wpdb->prefix.'wpbb_ids';
+	$sql = 'CREATE TABLE '.$table.' (
+		`wp_comment_id` INT UNSIGNED NOT NULL,
+		`wp_post_id` INT UNSIGNED NOT NULL,
+		`bb_topic_id` INT UNSIGNED NOT NULL,
+		`bb_post_id` INT UNSIGNED NOT NULL
+	);';
 	if ($wpdb->get_var('SHOW TABLES LIKE \'$table_name\'') != $table_name) 
 	{
-		$sql = 'CREATE TABLE '.$table.' (
-			`wp_comment_id` INT UNSIGNED NOT NULL,
-			`wp_post_id` INT UNSIGNED NOT NULL,
-			`bb_topic_id` INT UNSIGNED NOT NULL,
-			`bb_post_id` INT UNSIGNED NOT NULL
-		);';
 		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 		dbDelta($sql);
-		
 		add_option('wpbb_sync_db_version', $wpbb_sync_db_version);
 	}
-	
 	$installed_version = get_option('wpbb_sync_db_version');
 	// upgrade table if necessary
 	if ($installed_version != $wpbb_sync_db_version)
 	{
-		$sql = 'CREATE TABLE '.$table.' (
-			`wp_comment_id` INT UNSIGNED NOT NULL,
-			`wp_post_id` INT UNSIGNED NOT NULL,
-			`bb_topic_id` INT UNSIGNED NOT NULL,
-			`bb_post_id` INT UNSIGNED NOT NULL
-		);';
 		require_once(ABSPATH.'wp-admin/includes/upgrade.php');
 		dbDelta($sql);
 		update_option('wpbb_sync_db_version', $wpbb_sync_db_version);
@@ -614,10 +618,10 @@ function get_table_item($field, $value)
 	return $wpdb->get_row('SELECT * FROM '.$wpdb->prefix."wpbb_ids WHERE $field = $value LIMIT 1", ARRAY_A);
 }
 
-function detele_talbe_item($field, $value)
+function delete_table_item($field, $value)
 {
 	global $wpdb;
-	return $wpdb->query('DELETE FROM '.$wpdb->prefix."wpbb_ids WHERE $field = $value");
+	$wpdb->query('DELETE FROM '.$wpdb->prefix."wpbb_ids WHERE $field = $value");
 }
 
 function status_bb2wp($status)
@@ -649,6 +653,7 @@ function wpbb_config() {
 		$_POST['plugin_status'] == 'on' ? set_global_plugin_status('enabled') : set_global_plugin_status('disabled');
 		$_POST['enable_quoting'] == 'on' ? update_option('wpbb_quote_first_post', 'enabled') : update_option('wpbb_quote_first_post', 'disabled');
 		$_POST['sync_by_default'] == 'on' ? update_option('wpbb_sync_by_default', 'enabled') : update_option('wpbb_sync_by_default', 'disabled');
+		$_POST['sync_all_comments'] == 'on' ? update_option('wpbb_sync_all_comments', 'enabled') : update_option('wpbb_sync_all_comments', 'disabled');
 	}
 
 ?>
@@ -706,6 +711,12 @@ function wpbb_config() {
 			</td>
 		</tr>
 		<tr valign="baseline">
+			<th scope="row"><?php _e('Sync all comments', $textdomain); ?></th>
+			<td>
+				<input type="checkbox" name="sync_all_comments"<?php echo (get_option('wpbb_sync_all_comments') == 'enabled') ? ' checked="checked"' : '';?> /> (Sync comment even if not approved. Comment will have the same status at forum)
+			</td>
+		</tr>
+		<tr valign="baseline">
 			<th scope="row"><?php _e('Enable quoting', $textdomain); ?></th>
 			<td>
 				<input type="checkbox" name="enable_quoting"<?php echo (get_option('wpbb_quote_first_post') == 'enabled') ? ' checked="checked"' : '';?> /> (If enabled, first post summary in bbPress will be blockquoted)
@@ -736,39 +747,34 @@ function wpbb_post_options()
 {
 	global $post;
 	echo '<div class="postbox"><h3>bbPress syncronization</h3><div class="inside"><p>Syncronize post comments with bbPress?  ';
-	$sync = get_post_meta($post->ID, 'wpbb_sync_comments', true);
-	if ($sync == 'no') 
+	if (get_post_meta($post->ID, 'wpbb_sync_comments', true) == 'no') 
 	{
-		$yes = '';
-		$no = 'checked="checked"';
+		$checked = '';
 	} else 
 	{
-		$yes = 'checked="checked"';
-		$no = '';
+		$checked = 'checked="checked"';
 	}
-	echo '<input type="radio" name="wpbb_sync_comments" id="wpbb_sync_comments" value="yes" '.$yes.' /><label for="wpbb_sync_comments_yes">Yes</label> &nbsp;&nbsp;
-		<input type="radio" name="wpbb_sync_comments" id="wpbb_sync_comments_no" value="no" '.$no.' /> <label for="wpbb_sync_comments_no">No</label>';
+	echo '<input type="checkbox" name="wpbb_sync_comments" '.$checked.' />'; 
+	echo '</p></div></div>';
 }
 
 function wpbb_store_post_options($post_id)
 {
 	$post = get_post($post_id);
-	if (!update_post_meta($post_id, 'wpbb_sync_comments', $_POST['wpbb_sync_comments']))
-		add_post_meta($post_id, 'wpbb_sync_comments', $_POST['wpbb_sync_comments']);
+	$value = $_POST['wpbb_sync_comments'] == 'on' ? 'yes' : 'no';
+	update_post_meta($post_id, 'wpbb_sync_comments', $value);
 }
 
-// TODO: catch wordpress post deletion
-// FIXME: mirror comments with all statuses (fix if first comment in wp unapproved)
-// TODO: code style cleanup (remove unneeded {})
-// FIXME: less requests on settings page
 
 add_action('init', 'add_textdomain');
 add_action('deactivate_wordpress-bbpress-syncronization/wpbb-sync.php', 'deactivate_wpbb');
 add_action('comment_post', 'afterpost');
 add_action('edit_comment', 'afteredit');
+add_action('delete_comment', 'afterdelete');
 add_action('wp_set_comment_status', 'afteredit');
 add_action('edit_post', 'afterpostedit');
 add_action('edit_post', 'afterstatuschange');
+add_action('wp_set_comment_status', 'afteredit');
 add_action('admin_menu', 'options_page');
 register_activation_hook('wordpress-bbpress-syncronization/wpbb-sync.php', 'wpbb_install');
 add_action('edit_form_advanced', 'wpbb_post_options');
