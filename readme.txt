@@ -59,6 +59,7 @@ Version 0.4.3 (21.04.2009)
 *   Fixed bug with incorrect topic author starter (and some related bugs)
 *   Fixed bug with incorrect continuing topic without creating it
 *   Added option for creating topic even if comment not approved
+*   Added screenshots
 
 Version 0.4.2 (18.04.2009)
 
@@ -93,3 +94,8 @@ Version 0.2 (27.03.2009):
 
 *   Showing post excerpt in bbPress topic beginning
 *   Optional quoting first post in topic
+
+== Screenshots ==
+
+1. WordPress part settings
+2. bbPress part settings
