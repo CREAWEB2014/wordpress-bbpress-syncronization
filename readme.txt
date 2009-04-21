@@ -3,7 +3,7 @@ Contributors: bobrik
 Tags: bbPress, post, comment, integration, forum
 Requires at least: 2.6.0
 Tested up to: 2.7.1
-Stable tag: 0.4.2
+Stable tag: 0.4.3
 
 Sync your WordPress comments to bbPress forum and back.
 
@@ -53,6 +53,12 @@ YOU MAY HELP:
 Made for news.vitebsk.cc
 
 Changelog
+
+Version 0.4.3 (21.04.2009)
+
+*   Fixed bug with incorrect topic author starter (and some related bugs)
+*   Fixed bug with incorrect continuing topic without creating it
+*   Added option for creating topic even if comment not approved
 
 Version 0.4.2 (18.04.2009)
 

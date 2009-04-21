@@ -3,7 +3,7 @@
 Plugin Name: WordPress-bbPress syncronization
 Plugin URI: http://bobrik.name/
 Description: Sync your WordPress comments to bbPress forum and back.
-Version: 0.4.2
+Version: 0.4.3
 Author: Ivan Babrou <ibobrik@gmail.com>
 Author URI: http://bobrik.name/
 
@@ -45,8 +45,15 @@ function afterpost($id)
 	$post = get_post($comment->comment_post_ID);
 	if (!is_enabled_for_post($post->ID))
 		return; // sync disabled for that post
-	if ($post->comment_count == 1) {
-		// first comment we must create topic in forum
+	// do not sync if not enabled for that status
+	if (!sync_that_status($comment->comment_ID))
+		return;
+	$row = get_table_item('wp_post_id', $comment->comment_post_ID);
+	// checking topic existance for post instead of comment counting
+	if (!$row) {
+		// do not create topic for unapproved comment if not enabled
+		if (get_option('wpbb_create_topic_anyway') != 'enabled' && $comment->comment_approved != 1)
+			return;
 		create_bb_topic($post);
 		continue_bb_topic($post, $comment);
 	} elseif (sync_that_status($comment->comment_ID))
@@ -72,19 +79,19 @@ function afteredit($id)
 		edit_bb_post($post, $comment);
 	} else
 	{
-		if ($post->comment_count > 1 && sync_that_status($comment->comment_ID))
+		if (!sync_that_status($comment->comment_ID))
+			return;
+		$row = get_table_item('wp_post_id', $comment->comment_post_ID);
+		if (!$row)
 		{
-			// comment status changed, now just like new comment
-			continue_bb_topic($post, $comment);
+			// no topic for that post
+			if (get_option('wpbb_create_topic_anyway') != 'enabled' && $comment->comment_approved != 1)
+				return;
+			create_bb_topic($post);
+			continue_bb_topic($post, $comment);			
 		} else
 		{
-			// create topic  only if approved
-			if (get_real_comment_status($comment->comment_ID) == 1)
-			{
-				// first post, creating topic
-				create_bb_topic($post);
-				continue_bb_topic($post, $comment);
-			}
+			continue_bb_topic($post, $comment);
 		}
 	}
 }
@@ -194,6 +201,7 @@ function create_bb_topic($post)
 		'action' => 'create_topic',
 		'topic' => apply_filters('the_title', $post->post_title),
 		'post_content' => apply_filters('the_content', $post_content),
+		'user' => $post->post_author,
 		'tags' => implode(', ', $tags),
 		'post_id' => $post->ID,
 		'comment_id' => 0,
@@ -427,7 +435,7 @@ function edit_wp_tags()
 function send_command($pairs)
 {
 	$url = get_option('wpbb_bbpress_url').'my-plugins/wordpress-bbpress-syncronization/bbwp-sync.php';
-	// FIXME: do we alse need to set username?
+	// FIXME: do we also need to set username?
 	if (!isset($pairs['user']))
 	{
 		global $user_ID;
@@ -654,6 +662,7 @@ function wpbb_config() {
 		$_POST['enable_quoting'] == 'on' ? update_option('wpbb_quote_first_post', 'enabled') : update_option('wpbb_quote_first_post', 'disabled');
 		$_POST['sync_by_default'] == 'on' ? update_option('wpbb_sync_by_default', 'enabled') : update_option('wpbb_sync_by_default', 'disabled');
 		$_POST['sync_all_comments'] == 'on' ? update_option('wpbb_sync_all_comments', 'enabled') : update_option('wpbb_sync_all_comments', 'disabled');
+		$_POST['create_topic_anyway'] == 'on' ? update_option('wpbb_create_topic_anyway', 'enabled') : update_option('wpbb_create_topic_anyway', 'disabled');
 	}
 
 ?>
@@ -714,6 +723,12 @@ function wpbb_config() {
 			<th scope="row"><?php _e('Sync all comments', $textdomain); ?></th>
 			<td>
 				<input type="checkbox" name="sync_all_comments"<?php echo (get_option('wpbb_sync_all_comments') == 'enabled') ? ' checked="checked"' : '';?> /> (Sync comment even if not approved. Comment will have the same status at forum)
+			</td>
+		</tr>
+		<tr valign="baseline">
+			<th scope="row"><?php _e('Create topic anyway', $textdomain); ?></th>
+			<td>
+				<input type="checkbox" name="create_topic_anyway"<?php echo (get_option('wpbb_create_topic_anyway') == 'enabled') ? ' checked="checked"' : '';?> /> (Create topic even if comment not approved. Will create topic <strong>without</strong> unapproved comment, only first post)
 			</td>
 		</tr>
 		<tr valign="baseline">
