@@ -3,7 +3,7 @@
 Plugin Name: WordPress-bbPress syncronization
 Plugin URI: http://bobrik.name/
 Description: Sync your WordPress comments to bbPress forum and back.
-Version: 0.4.3
+Version: 0.4.5
 Author: Ivan Babrou <ibobrik@gmail.com>
 Author URI: http://bobrik.name/
 
@@ -127,6 +127,22 @@ function afterstatuschange($id)
 	} elseif ($post->comment_status == 'closed')
 	{
 		close_bb_topic($row['bb_topic_id']);
+	}
+}
+
+function afterpuplish($id)
+{
+	//error_log('wordpress: afterpuplish');
+	if (!wpbb_do_sync())
+		return;
+	if (!is_enabled_for_post($id))
+		return; // sync disabled for that post
+	$post = get_post($id);
+	// so maybe? ;)
+	$row = get_table_item('wp_post_id', $post->ID);
+	if (!$row && get_option('wpbb_topic_after_posting') == 'enabled')
+	{
+		create_bb_topic($post);
 	}
 }
 
@@ -663,6 +679,7 @@ function wpbb_config() {
 		$_POST['sync_by_default'] == 'on' ? update_option('wpbb_sync_by_default', 'enabled') : update_option('wpbb_sync_by_default', 'disabled');
 		$_POST['sync_all_comments'] == 'on' ? update_option('wpbb_sync_all_comments', 'enabled') : update_option('wpbb_sync_all_comments', 'disabled');
 		$_POST['create_topic_anyway'] == 'on' ? update_option('wpbb_create_topic_anyway', 'enabled') : update_option('wpbb_create_topic_anyway', 'disabled');
+		$_POST['topic_after_posting'] == 'on' ? update_option('wpbb_topic_after_posting', 'enabled') : update_option('wpbb_topic_after_posting', 'disabled');
 	}
 
 ?>
@@ -717,6 +734,12 @@ function wpbb_config() {
 			<th scope="row"><?php _e('Sync comments by default', $textdomain); ?></th>
 			<td>
 				<input type="checkbox" name="sync_by_default"<?php echo (get_option('wpbb_sync_by_default') == 'enabled') ? ' checked="checked"' : '';?> /> (Also will be used for posts without any sync option value)
+			</td>
+		</tr>
+		<tr valign="baseline">
+			<th scope="row"><?php _e('Create topic on posting', $textdomain); ?></th>
+			<td>
+				<input type="checkbox" name="topic_after_posting"<?php echo (get_option('wpbb_topic_after_posting') == 'enabled') ? ' checked="checked"' : '';?> /> (Will create topic in bbPress after WordPress post publishing)
 			</td>
 		</tr>
 		<tr valign="baseline">
@@ -796,5 +819,6 @@ add_action('edit_form_advanced', 'wpbb_post_options');
 add_action('draft_post', 'wpbb_store_post_options');
 add_action('publish_post', 'wpbb_store_post_options');
 add_action('save_post', 'wpbb_store_post_options');
+add_action('publish_post', 'afterpuplish');
 
 ?>

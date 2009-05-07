@@ -3,7 +3,7 @@ Contributors: bobrik
 Tags: bbPress, post, comment, integration, forum
 Requires at least: 2.6.0
 Tested up to: 2.7.1
-Stable tag: 0.4.3
+Stable tag: 0.4.5
 
 Sync your WordPress comments to bbPress forum and back.
 
@@ -25,6 +25,7 @@ REQUIREMENTS:
 DONE:
 
 *   Creating topic for new comments on post and continuing conversation
+*   Creating topic for new posts after publishing
 *   Mirroring comment/forum post changes WordPress to bbPress and back
 *   Mirroring comment/forum post status (spam, unapproved, approved)
 *   Per-post enable/disable for comment syncronization
@@ -53,6 +54,10 @@ YOU MAY HELP:
 Made for news.vitebsk.cc
 
 Changelog
+
+Version 0.4.5 (7.05.2009)
+
+*  Added option to create topic in bbPress after post publishing in WordPress
 
 Version 0.4.3 (21.04.2009)
 
