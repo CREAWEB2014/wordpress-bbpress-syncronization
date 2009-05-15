@@ -451,7 +451,10 @@ function edit_wp_tags()
 function send_command($pairs)
 {
 	$url = get_option('wpbb_bbpress_url').'my-plugins/wordpress-bbpress-syncronization/bbwp-sync.php';
-	// FIXME: do we also need to set username?
+	preg_match('@https?://([\-_\w\.]+)+(:(\d+))?/(.*)@', $url, $matches);
+	if (!$matches)
+		return;
+	// setting user
 	if (!isset($pairs['user']))
 	{
 		global $user_ID;
@@ -467,13 +470,45 @@ function send_command($pairs)
 			$pairs['user'] = 0;
 		}
 	}
-	$ch = curl_init($url);
-	curl_setopt ($ch, CURLOPT_POST, 1);
-	curl_setopt ($ch, CURLOPT_POSTFIELDS, $pairs);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
-	$answer = curl_exec($ch);
-	curl_close($ch);
-	return $answer;
+	if (substr($url, 0, 5) == 'https')
+	{
+		// must use php-curl to work with https
+		// FIXME: really works? :)
+		$ch = curl_init($url);
+		curl_setopt ($ch, CURLOPT_POST, 1);
+		curl_setopt ($ch, CURLOPT_POSTFIELDS, $pairs);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
+		$answer = curl_exec($ch);
+		curl_close($ch);
+		return $answer;
+	} else
+	{
+		$port = $matches[3] ? $matches[3] : 80;
+		global $wp_version;
+		
+		$request = '';
+		foreach ($pairs as $key => $data)
+			$request .= $key.'='.urlencode(stripslashes($data)).'&';
+
+		$http_request  = "POST /$matches[4] HTTP/1.0\r\n";
+		$http_request .= "Host: $matches[1]\r\n";
+		$http_request .= "Content-Type: application/x-www-form-urlencoded; charset=" . get_option('blog_charset') . "\r\n";
+		$http_request .= "Content-Length: " . strlen($request) . "\r\n";
+		$http_request .= "User-Agent: WordPress/$wp_version | WordPress-bbPress	syncronization\r\n";
+		$http_request .= "\r\n";
+		$http_request .= $request;
+
+		$response = '';
+		if( false != ( $fs = @fsockopen($matches[1], $port, $errno, $errstr, 10) ) ) {
+			fwrite($fs, $http_request);
+
+			while ( !feof($fs) )
+				$response .= fgets($fs, 1160); // One TCP-IP packet
+			fclose($fs);
+			$response = explode("\r\n\r\n", $response, 2);
+		}
+		return $response[1];
+	}
 }
 
 function test_pair()
