@@ -25,6 +25,9 @@ the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 */
 
+// for version checking
+$wpbb_version = 0.50;
+$min_version = 0.50;
 
 // for mode checking
 $wpbb_plugin = 0;
@@ -421,13 +424,11 @@ function set_wp_plugin_status()
 function check_wp_settings()
 {
 	if (!test_pair())
-	{
 		return 1; // cannot establish connection to bb
-	}
 	if (!secret_key_equal())
-	{
 		return 2; // secret keys are not equal
-	}
+	if (!correct_bbwp_version())
+		return 3; // too old bbPress part version
 	return 0; // everything is ok
 }
 
@@ -439,6 +440,8 @@ function wp_status_error($code)
 		return __('Cannot establish connection to bbPress part');
 	elseif ($code == 2)
 		return __('Invalid secret key');
+	elseif ($code == 3)
+		return __('Too old bbPress part plugin version');
 }
 
 function edit_wp_tags()
@@ -610,6 +613,10 @@ function wpbb_listener()
 	{
 		$code = check_wp_settings();
 		echo serialize(array('code' => $code, 'message' => wp_status_error($code)));
+	} elseif ($_POST['action'] == 'get_wpbb_version')
+	{
+		global $wpbb_version;
+		echo serialize(array('version' => $wpbb_version));
 	}
 	// we need enabled plugins for next actions
 	if (get_option('wpbb_plugin_status') != 'enabled')
@@ -709,10 +716,13 @@ function wpbb_config() {
 			die(__('Cheatin&#8217; uh?'));
 		update_option('wpbb_bbpress_url', $_POST['bbpress_url']);
 		update_option('wpbb_secret_key', $_POST['secret_key']);
+		update_option('wpbb_comments_to_show', (int) $_POST['comments_to_show'] >= -1 ? (int) $_POST['comments_to_show'] : -1);
+		update_option('wpbb_max_comments_with_form', (int) $_POST['max_comments_with_form'] >= -1 ? (int) $_POST['max_comments_with_form'] : -1);
 		$_POST['plugin_status'] == 'on' ? set_global_plugin_status('enabled') : set_global_plugin_status('disabled');
 		$_POST['enable_quoting'] == 'on' ? update_option('wpbb_quote_first_post', 'enabled') : update_option('wpbb_quote_first_post', 'disabled');
 		$_POST['sync_by_default'] == 'on' ? update_option('wpbb_sync_by_default', 'enabled') : update_option('wpbb_sync_by_default', 'disabled');
 		$_POST['sync_all_comments'] == 'on' ? update_option('wpbb_sync_all_comments', 'enabled') : update_option('wpbb_sync_all_comments', 'disabled');
+		$_POST['point_to_forum'] == 'on' ? update_option('wpbb_point_to_forum', 'enabled') : update_option('wpbb_point_to_forum', 'disabled');
 		$_POST['create_topic_anyway'] == 'on' ? update_option('wpbb_create_topic_anyway', 'enabled') : update_option('wpbb_create_topic_anyway', 'disabled');
 		$_POST['topic_after_posting'] == 'on' ? update_option('wpbb_topic_after_posting', 'enabled') : update_option('wpbb_topic_after_posting', 'disabled');
 	}
@@ -796,8 +806,26 @@ function wpbb_config() {
 			</td>
 		</tr>
 		<tr valign="baseline">
+			<th scope="row"><?php _e('Amount of comments to show', $textdomain); ?></th>
+			<td>
+				<input type="text" name="comments_to_show" value="<?php echo get_option('wpbb_comments_to_show'); ?>" /> (Set to <em>-1</em> to show all comments)
+			</td>
+		</tr>
+		<tr valign="baseline">
+			<th scope="row"><?php _e('Point to forum in latest comment', $textdomain); ?></th>
+			<td>
+				<input type="checkbox" name="point_to_forum"<?php echo (get_option('wpbb_point_to_forum') == 'enabled') ? ' checked="checked"' : ''; ?> /> (If enabled, lats comment will have link to forum discussion. Don't set previvous option to 0 to use that)
+			</td>
+		</tr>
+		<tr valign="baseline">
+			<th scope="row"><?php _e('Max comments with form', $textdomain); ?></th>
+			<td>
+				<input type="text" name="max_comments_with_form" value="<?php echo get_option('wpbb_max_comments_with_form'); ?>" /> (Set to <em>-1</em> to show new comment form with any comments count)
+			</td>
+		</tr>
+		<tr valign="baseline">
 			<th scope="row"><?php _e('Enable plugin', $textdomain); ?></th>
-			<td><?php $check = check_wpbb_settings(); ?>
+			<td><?php $check = check_wpbb_settings(); if ($check['code'] != 0) set_global_plugin_status('disabled'); ?>
 				<input type="checkbox" name="plugin_status"<?php echo (get_option('wpbb_plugin_status') == 'enabled') ? ' checked="checked"' : ''; echo ($check['code'] == 0) ? '' : ' disabled="disabled"'; ?> /> (<?php echo ($check['code'] == 0) ? 'Allowed by both parts' : 'Not allowed: '.$check['message'] ?>)
 			</td>
 		</tr>
@@ -839,6 +867,46 @@ function wpbb_store_post_options($post_id)
 }
 
 
+function wpbb_comments_array_count($comments)
+{
+	$maxform = get_option('wpbb_max_comments_with_form');
+	global $post;
+	if (count($comments) > $maxform)
+		$post->comment_status = 'closed';
+	$max = get_option('wpbb_comments_to_show');
+	if (get_option('wpbb_point_to_forum') == 'enabled' && $max != 0)
+	{
+		$row = get_table_item('wp_post_id', $post->ID);
+		if ($row)
+		{
+			$topic_id = $row['bb_topic_id'];
+			$answer = unserialize(send_command(array('action' => 'get_topic_link', 'topic_id' => $topic_id)));
+			$link = $answer['link'];
+		}
+		// FIXME: dirty hack to get last array element
+		$comments[count($comments)-1]->comment_content .= '<br/><p class="wpbb_continue_discussion">'.
+			__("Please continue disussion on the forum: ")."<a href='$link'> link</a></p>";
+	}
+	if ($max == -1)
+		return $comments;
+	$i = count($comments);
+	while ($i > $max)
+	{
+		array_shift($comments);
+		--$i;
+	}
+	return $comments;
+}
+
+
+function correct_bbwp_version()
+{
+	$answer = unserialize(send_command(array('action' => 'get_bbwp_version')));
+	global $min_version;
+	return ($answer['version'] < $min_version) ? 0 : 1;
+}
+
+
 add_action('init', 'add_textdomain');
 add_action('deactivate_wordpress-bbpress-syncronization/wpbb-sync.php', 'deactivate_wpbb');
 add_action('comment_post', 'afterpost');
@@ -855,5 +923,6 @@ add_action('draft_post', 'wpbb_store_post_options');
 add_action('publish_post', 'wpbb_store_post_options');
 add_action('save_post', 'wpbb_store_post_options');
 add_action('publish_post', 'afterpuplish');
+add_filter('comments_array', 'wpbb_comments_array_count');
 
 ?>
