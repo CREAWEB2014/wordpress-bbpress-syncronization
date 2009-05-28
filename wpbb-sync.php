@@ -3,7 +3,7 @@
 Plugin Name: WordPress-bbPress syncronization
 Plugin URI: http://bobrik.name/
 Description: Sync your WordPress comments to bbPress forum and back.
-Version: 0.5.0
+Version: 0.5.1
 Author: Ivan Babrou <ibobrik@gmail.com>
 Author URI: http://bobrik.name/
 
@@ -669,6 +669,19 @@ function wpbb_install()
 		dbDelta($sql);
 		update_option('wpbb_sync_db_version', $wpbb_sync_db_version);
 	}
+	if (!get_option('wpbb_quote_first_post'))
+	{
+		update_option('wpbb_quote_first_post', 'enabled');
+		update_option('wpbb_comments_to_show', -1);
+		update_option('wpbb_max_comments_with_form', -1);
+		update_option('wpbb_quote_first_post', 'enabled');
+		update_option('wpbb_sync_by_default', 'enabled');
+		update_option('wpbb_sync_all_comments', 'disabled');
+		update_option('wpbb_point_to_forum', 'enabled');
+		update_option('wpbb_create_topic_anyway', 'disabled');
+		update_option('wpbb_topic_after_posting', 'disabled');
+	}
+	// next options must be cheched by another conditions!
 }
 
 function add_table_item($wp_post, $wp_comment, $bb_topic, $bb_post)
@@ -718,13 +731,13 @@ function wpbb_config() {
 		update_option('wpbb_secret_key', $_POST['secret_key']);
 		update_option('wpbb_comments_to_show', (int) $_POST['comments_to_show'] >= -1 ? (int) $_POST['comments_to_show'] : -1);
 		update_option('wpbb_max_comments_with_form', (int) $_POST['max_comments_with_form'] >= -1 ? (int) $_POST['max_comments_with_form'] : -1);
-		$_POST['plugin_status'] == 'on' ? set_global_plugin_status('enabled') : set_global_plugin_status('disabled');
-		$_POST['enable_quoting'] == 'on' ? update_option('wpbb_quote_first_post', 'enabled') : update_option('wpbb_quote_first_post', 'disabled');
-		$_POST['sync_by_default'] == 'on' ? update_option('wpbb_sync_by_default', 'enabled') : update_option('wpbb_sync_by_default', 'disabled');
-		$_POST['sync_all_comments'] == 'on' ? update_option('wpbb_sync_all_comments', 'enabled') : update_option('wpbb_sync_all_comments', 'disabled');
-		$_POST['point_to_forum'] == 'on' ? update_option('wpbb_point_to_forum', 'enabled') : update_option('wpbb_point_to_forum', 'disabled');
-		$_POST['create_topic_anyway'] == 'on' ? update_option('wpbb_create_topic_anyway', 'enabled') : update_option('wpbb_create_topic_anyway', 'disabled');
-		$_POST['topic_after_posting'] == 'on' ? update_option('wpbb_topic_after_posting', 'enabled') : update_option('wpbb_topic_after_posting', 'disabled');
+		set_global_plugin_status($_POST['plugin_status'] == 'on' ? 'enabled' : 'disabled');
+		update_option('wpbb_quote_first_post', $_POST['enable_quoting'] == 'on' ? 'enabled' : 'disabled');
+		update_option('wpbb_sync_by_default', $_POST['sync_by_default'] == 'on' ? 'enabled' : 'disabled');
+		update_option('wpbb_sync_all_comments', $_POST['sync_all_comments'] == 'on' ? 'enabled' : 'disabled');
+		update_option('wpbb_point_to_forum', $_POST['point_to_forum'] == 'on' ? 'enabled' : 'disabled');
+		update_option('wpbb_create_topic_anyway', $_POST['create_topic_anyway'] == 'on' ? 'enabled' : 'disabled');
+		update_option('wpbb_topic_after_posting', $_POST['topic_after_posting'] == 'on' ? 'enabled' : 'disabled');
 	}
 
 ?>
@@ -814,7 +827,7 @@ function wpbb_config() {
 		<tr valign="baseline">
 			<th scope="row"><?php _e('Point to forum in latest comment', $textdomain); ?></th>
 			<td>
-				<input type="checkbox" name="point_to_forum"<?php echo (get_option('wpbb_point_to_forum') == 'enabled') ? ' checked="checked"' : ''; ?> /> (If enabled, lats comment will have link to forum discussion. Don't set previvous option to 0 to use that)
+				<input type="checkbox" name="point_to_forum"<?php echo (get_option('wpbb_point_to_forum') == 'enabled') ? ' checked="checked"' : ''; ?> /> (If enabled, last comment will have link to forum discussion. Don't set previvous option to 0 to use that)
 			</td>
 		</tr>
 		<tr valign="baseline">
@@ -871,7 +884,7 @@ function wpbb_comments_array_count($comments)
 {
 	$maxform = get_option('wpbb_max_comments_with_form');
 	global $post;
-	if (count($comments) > $maxform)
+	if ($maxform != -1 and count($comments) > $maxform)
 		$post->comment_status = 'closed';
 	$max = get_option('wpbb_comments_to_show');
 	if (get_option('wpbb_point_to_forum') == 'enabled' && $max != 0)
