@@ -3,7 +3,7 @@
 Plugin Name: WordPress-bbPress syncronization
 Plugin URI: http://bobrik.name/
 Description: Sync your WordPress comments to bbPress forum and back.
-Version: 0.5.1
+Version: 0.5.2
 Author: Ivan Babrou <ibobrik@gmail.com>
 Author URI: http://bobrik.name/
 
@@ -133,9 +133,9 @@ function afterstatuschange($id)
 	}
 }
 
-function afterpuplish($id)
+function afterpublish($id)
 {
-	//error_log('wordpress: afterpuplish');
+	// error_log('wordpress: afterpublish');
 	if (!wpbb_do_sync())
 		return;
 	if (!is_enabled_for_post($id))
@@ -869,14 +869,20 @@ function wpbb_post_options()
 		$checked = 'checked="checked"';
 	}
 	echo '<input type="checkbox" name="wpbb_sync_comments" '.$checked.' />'; 
+	// additional checks for checkbox above presenсe
+	echo '<input type="hidden" name="wpbb_sync_comments_presenсe" value="yes" />';
 	echo '</p></div></div>';
 }
 
 function wpbb_store_post_options($post_id)
 {
 	$post = get_post($post_id);
-	$value = $_POST['wpbb_sync_comments'] == 'on' ? 'yes' : 'no';
-	update_post_meta($post_id, 'wpbb_sync_comments', $value);
+	// we must change value only if showed checkbox
+	if (isset($_POST['wpbb_sync_comments_presenсe']))
+	{
+		$value = $_POST['wpbb_sync_comments'] == 'on' ? 'yes' : 'no';
+		update_post_meta($post_id, 'wpbb_sync_comments', $value);
+	}
 }
 
 
@@ -886,6 +892,8 @@ function wpbb_comments_array_count($comments)
 	global $post;
 	if ($maxform != -1 and count($comments) > $maxform)
 		$post->comment_status = 'closed';
+	if (count($comments) == 0)
+		return; // we have nothing to change
 	$max = get_option('wpbb_comments_to_show');
 	if (get_option('wpbb_point_to_forum') == 'enabled' && $max != 0)
 	{
@@ -935,7 +943,7 @@ add_action('edit_form_advanced', 'wpbb_post_options');
 add_action('draft_post', 'wpbb_store_post_options');
 add_action('publish_post', 'wpbb_store_post_options');
 add_action('save_post', 'wpbb_store_post_options');
-add_action('publish_post', 'afterpuplish');
+add_action('publish_post', 'afterpublish');
 add_filter('comments_array', 'wpbb_comments_array_count');
 
 ?>
