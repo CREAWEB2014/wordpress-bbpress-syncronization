@@ -1,9 +1,9 @@
 === WordPress-bbPress syncronization ===
 Contributors: bobrik
-Tags: bbPress, post, comment, integration, forum
+Tags: bbPress, post, comment, integration, forum, syncronization
 Requires at least: 2.6.0
-Tested up to: 2.7.1
-Stable tag: 0.5.2
+Tested up to: 2.8.0
+Stable tag: 0.6.0
 
 Sync your WordPress comments to bbPress forum and back.
 
@@ -14,7 +14,6 @@ Sync your WordPress comments to bbPress forum and back.
 **bbPress part may be downloaded [here](http://bbpress.org/plugins/topic/wordpress-bbpress-syncronization/page/3/)**
 
 When you post comment to WordPress it automatically mirroring in bbPress and back.
-Please note, only beta now. See below how you can help.
 
 REQUIREMENTS:
 
@@ -22,7 +21,7 @@ REQUIREMENTS:
 *   WordPress user database must be integrated with bbPress
 *   Plugin must be installed and correctly configured in both systems
 
-DONE:
+FEATURES:
 
 *   Creating topic for new comments on post and continuing conversation
 *   Creating topic for new posts after publishing
@@ -41,11 +40,7 @@ DONE:
 *   Correct displaying even you use markup plugins
 *   Hiding comment for in WordPress after some comments and pointing to forum
 *   Optionally showing only some recent comments in WordPress
-
-TODO:
-
-*   Catch post deletion in WordPress
-*   Catch topic deletion in bbPress
+*   Translations
 
 YOU MAY HELP:
 
@@ -56,6 +51,15 @@ YOU MAY HELP:
 Made for news.vitebsk.cc
 
 Changelog
+
+Version 0.6.0 (06.07.2009)
+
+*  Now plugin checks for availability by another part before any other checks
+*  Added showing last topic poster as anonymous name from WP if anonymous info enabled
+*  Added ability for translation (gettext template included)
+*  Added russian translation (thanks to me, hehe)
+*  Nicer plugin administration interface, especially for new bbPress versions
+*  More accurate and secure secret keys structure
 
 Version 0.5.2 (02.06.2009)
 

@@ -26,17 +26,16 @@ Boston, MA 02111-1307, USA.
 */
 
 // for version checking
-$wpbb_version = 0.50;
-$min_version = 0.50;
+$wpbb_version = 0.60;
+$min_version = 0.60;
 
 // for mode checking
 $wpbb_plugin = 0;
 
-
 function add_textdomain()
 {
 	// setting textdomain for translation
-	load_plugin_textdomain('wordpress-bbpress-syncronization', false, 'wordpress-bbpress-syncronization');
+	load_plugin_textdomain('wpbb-sync', false, 'wordpress-bbpress-syncronization');
 }
 
 function afterpost($id)
@@ -435,13 +434,13 @@ function check_wp_settings()
 function wp_status_error($code)
 {
 	if ($code == 0)
-		return __('Everything is ok!');
+		return __('Everything is ok!', 'wpbb-sync');
 	if ($code == 1)
-		return __('Cannot establish connection to bbPress part');
+		return __('Cannot establish connection to bbPress part', 'wpbb-sync');
 	elseif ($code == 2)
-		return __('Invalid secret key');
+		return __('Invalid secret key', 'wpbb-sync');
 	elseif ($code == 3)
-		return __('Too old bbPress part plugin version');
+		return __('Too old bbPress part plugin version', 'wpbb-sync');
 }
 
 function edit_wp_tags()
@@ -525,14 +524,14 @@ function test_pair()
 
 function secret_key_equal()
 {
-	$answer = send_command(array('action' => 'keytest', 'secret_key' => get_option('wpbb_secret_key')));
+	$answer = send_command(array('action' => 'keytest', 'secret_key' => md5(get_option('wpbb_secret_key'))));
 	$data = unserialize($answer);
 	return $data['keytest'];
 }
 
 function compare_keys_local()
 {
-	return $_POST['secret_key'] == get_option('wpbb_secret_key') ? 1 : 0;
+	return $_POST['secret_key'] == md5(get_option('wpbb_secret_key')) ? 1 : 0;
 }
 
 function set_global_plugin_status($status)
@@ -559,7 +558,12 @@ function check_wpbb_settings()
 	$bb_settings = check_bb_settings();
 	$wp_code = check_wp_settings();
 	$wp_message = wp_status_error($wp_code);
-	if ($wp_code != 0)
+	# it's better to check bbPress ability to connect first
+	if ($bb_settings['code'] == 1)
+	{
+		$data['code'] = 1;
+		$data['message'] = '[bbPress part] '.$bb_settings['message'];
+	} elseif ($wp_code != 0)
 	{
 		$data['code'] = $wp_code;
 		$data['message'] = '[WordPress part] '.$wp_message;
@@ -570,7 +574,7 @@ function check_wpbb_settings()
 	} else
 	{
 		$data['code'] = 0;
-		$data['message'] = __('Everything is ok!');
+		$data['message'] = __('Everything is ok!', 'wpbb-sync');
 	}
 	return $data;
 }
@@ -718,7 +722,7 @@ function options_page()
 {
 	if (function_exists('add_submenu_page'))
 	{
-		add_submenu_page('plugins.php', __('bbPress syncronization'), __('bbPress syncronization'), 'manage_options', 'wpbb-config', 'wpbb_config');
+		add_submenu_page('plugins.php', __('bbPress syncronization', 'wpbb-sync'), __('bbPress syncronization', 'wpbb-sync'), 'manage_options', 'wpbb-config', 'wpbb_config');
 	}
 }
 
@@ -742,109 +746,109 @@ function wpbb_config() {
 
 ?>
 <div class="wrap">
-	<h2>bbPress syncronization</h2>
+	<h2><?php _e('bbPress syncronization', 'wpbb-sync'); ?></h2>
 	<form name="form1" method="post" action="">
 	<input type="hidden" name="stage" value="process" />
 	<table width="100%" cellspacing="2" cellpadding="5" class="form-table">
 		<tr valign="baseline">
-			<th scope="row"><?php _e("bbPress plugin url", $textdomain); ?></th>
+			<th scope="row"><?php _e("bbPress plugin url", 'wpbb-sync'); ?></th>
 			<td>
 				<input type="text" name="bbpress_url" value="<?php echo get_option('wpbb_bbpress_url'); ?>" />
 				<?php
-				if (!get_option('wpbb_bbpress_url'))
+				if (!get_option('wpbb_bbpress_url') && test_pair())
 				{
-					_e('bbPress url (we\'ll add <em>my-plugins/wordpress-bbpress-syncronization/bbwp-sync.php</em> to your url)', $textdomain);
+					_e('bbPress url (we\'ll add <em>my-plugins/wordpress-bbpress-syncronization/bbwp-sync.php</em> to your url)', 'wpbb-sync');
 				} else
 				{
 					if (test_pair())
 					{
-						_e('Everything is ok!', $textdomain);
+						_e('Everything is ok!', 'wpbb-sync');
 					} else
 					{
-						_e('URL is incorrect or connection error, please verify it (full variant): '.get_option('wpbb_bbpress_url').'my-plugins/wordpress-bbpress-syncronization/bbwp-sync.php');
+						echo  __('URL is incorrect or connection error, please verify it (full variant): ', 'wpbb-sync').get_option('wpbb_bbpress_url').'my-plugins/wordpress-bbpress-syncronization/bbwp-sync.php';
 					}
 				}
 				?>
 			</td>
 		</tr>
 		<tr valign="baseline">
-			<th scope="row"><?php _e('Secret key', $textdomain);  ?></th>
+			<th scope="row"><?php _e('Secret key', 'wpbb-sync');  ?></th>
 			<td>
-				<input type="text" name="secret_key" value="<?php echo get_option('wpbb_secret_key', $textdomain); ?>" />
+				<input type="text" name="secret_key" value="<?php echo get_option('wpbb_secret_key', 'wpbb-sync'); ?>" />
 				<?php
 				if (!get_option('wpbb_secret_key'))
 				{
-					_e('We need it for secure communication between your systems', $textdomain);
+					_e('We need it for secure communication between your systems', 'wpbb-sync');
 				} else
 				{
 					if (secret_key_equal())
 					{
-						_e('Everything is ok!', $textdomain);
+						_e('Everything is ok!', 'wpbb-sync');
 					} else
 					{
-						_e('Error! Not equal secret keys in WordPress and bbPress', $textdomain);
+						_e('Error! Not equal secret keys in WordPress and bbPress', 'wpbb-sync');
 					}
 				}
 				?>
 			</td>
 		</tr>
 		<tr valign="baseline">
-			<th scope="row"><?php _e('Sync comments by default', $textdomain); ?></th>
+			<th scope="row"><?php _e('Sync comments by default', 'wpbb-sync'); ?></th>
 			<td>
-				<input type="checkbox" name="sync_by_default"<?php echo (get_option('wpbb_sync_by_default') == 'enabled') ? ' checked="checked"' : '';?> /> (Also will be used for posts without any sync option value)
+				<input type="checkbox" name="sync_by_default"<?php echo (get_option('wpbb_sync_by_default') == 'enabled') ? ' checked="checked"' : '';?> /> (<?php _e('Also will be used for posts without any sync option value', 'wpbb-sync'); ?>)
 			</td>
 		</tr>
 		<tr valign="baseline">
-			<th scope="row"><?php _e('Create topic on posting', $textdomain); ?></th>
+			<th scope="row"><?php _e('Create topic on posting', 'wpbb-sync'); ?></th>
 			<td>
-				<input type="checkbox" name="topic_after_posting"<?php echo (get_option('wpbb_topic_after_posting') == 'enabled') ? ' checked="checked"' : '';?> /> (Will create topic in bbPress after WordPress post publishing)
+				<input type="checkbox" name="topic_after_posting"<?php echo (get_option('wpbb_topic_after_posting') == 'enabled') ? ' checked="checked"' : '';?> /> (<?php _e('Will create topic in bbPress after WordPress post publishing', 'wpbb-sync'); ?>)
 			</td>
 		</tr>
 		<tr valign="baseline">
-			<th scope="row"><?php _e('Sync all comments', $textdomain); ?></th>
+			<th scope="row"><?php _e('Sync all comments', 'wpbb-sync'); ?></th>
 			<td>
-				<input type="checkbox" name="sync_all_comments"<?php echo (get_option('wpbb_sync_all_comments') == 'enabled') ? ' checked="checked"' : '';?> /> (Sync comment even if not approved. Comment will have the same status at forum)
+				<input type="checkbox" name="sync_all_comments"<?php echo (get_option('wpbb_sync_all_comments') == 'enabled') ? ' checked="checked"' : '';?> /> (<?php _e('Sync comment even if not approved. Comment will have the same status at forum', 'wpbb-sync'); ?>)
 			</td>
 		</tr>
 		<tr valign="baseline">
-			<th scope="row"><?php _e('Create topic anyway', $textdomain); ?></th>
+			<th scope="row"><?php _e('Create topic anyway', 'wpbb-sync'); ?></th>
 			<td>
-				<input type="checkbox" name="create_topic_anyway"<?php echo (get_option('wpbb_create_topic_anyway') == 'enabled') ? ' checked="checked"' : '';?> /> (Create topic even if comment not approved. Will create topic <strong>without</strong> unapproved comment, only first post)
+				<input type="checkbox" name="create_topic_anyway"<?php echo (get_option('wpbb_create_topic_anyway') == 'enabled') ? ' checked="checked"' : '';?> /> (<?php _e('Create topic even if comment not approved. Will create topic <strong>without</strong> unapproved comment, only first post', 'wpbb-sync'); ?>)
 			</td>
 		</tr>
 		<tr valign="baseline">
-			<th scope="row"><?php _e('Enable quoting', $textdomain); ?></th>
+			<th scope="row"><?php _e('Enable quoting', 'wpbb-sync'); ?></th>
 			<td>
-				<input type="checkbox" name="enable_quoting"<?php echo (get_option('wpbb_quote_first_post') == 'enabled') ? ' checked="checked"' : '';?> /> (If enabled, first post summary in bbPress will be blockquoted)
+				<input type="checkbox" name="enable_quoting"<?php echo (get_option('wpbb_quote_first_post') == 'enabled') ? ' checked="checked"' : '';?> /> (<?php _e('If enabled, first post summary in bbPress will be blockquoted', 'wpbb-sync'); ?>)
 			</td>
 		</tr>
 		<tr valign="baseline">
-			<th scope="row"><?php _e('Amount of comments to show', $textdomain); ?></th>
+			<th scope="row"><?php _e('Amount of comments to show', 'wpbb-sync'); ?></th>
 			<td>
-				<input type="text" name="comments_to_show" value="<?php echo get_option('wpbb_comments_to_show'); ?>" /> (Set to <em>-1</em> to show all comments)
+				<input type="text" name="comments_to_show" value="<?php echo get_option('wpbb_comments_to_show'); ?>" /> (<?php _e('Set to <em>-1</em> to show all comments', 'wpbb-sync'); ?>)
 			</td>
 		</tr>
 		<tr valign="baseline">
-			<th scope="row"><?php _e('Point to forum in latest comment', $textdomain); ?></th>
+			<th scope="row"><?php _e('Point to forum in latest comment', 'wpbb-sync'); ?></th>
 			<td>
-				<input type="checkbox" name="point_to_forum"<?php echo (get_option('wpbb_point_to_forum') == 'enabled') ? ' checked="checked"' : ''; ?> /> (If enabled, last comment will have link to forum discussion. Don't set previvous option to 0 to use that)
+				<input type="checkbox" name="point_to_forum"<?php echo (get_option('wpbb_point_to_forum') == 'enabled') ? ' checked="checked"' : ''; ?> /> (<?php _e('If enabled, last comment will have link to forum discussion. Don\'t set previvous option to 0 to use that', 'wpbb-sync'); ?>)
 			</td>
 		</tr>
 		<tr valign="baseline">
-			<th scope="row"><?php _e('Max comments with form', $textdomain); ?></th>
+			<th scope="row"><?php _e('Max comments with form', 'wpbb-sync'); ?></th>
 			<td>
-				<input type="text" name="max_comments_with_form" value="<?php echo get_option('wpbb_max_comments_with_form'); ?>" /> (Set to <em>-1</em> to show new comment form with any comments count)
+				<input type="text" name="max_comments_with_form" value="<?php echo get_option('wpbb_max_comments_with_form'); ?>" /> (<?php _e('Set to <em>-1</em> to show new comment form with any comments count', 'wpbb-sync'); ?>)
 			</td>
 		</tr>
 		<tr valign="baseline">
-			<th scope="row"><?php _e('Enable plugin', $textdomain); ?></th>
+			<th scope="row"><?php _e('Enable plugin', 'wpbb-sync'); ?></th>
 			<td><?php $check = check_wpbb_settings(); if ($check['code'] != 0) set_global_plugin_status('disabled'); ?>
-				<input type="checkbox" name="plugin_status"<?php echo (get_option('wpbb_plugin_status') == 'enabled') ? ' checked="checked"' : ''; echo ($check['code'] == 0) ? '' : ' disabled="disabled"'; ?> /> (<?php echo ($check['code'] == 0) ? 'Allowed by both parts' : 'Not allowed: '.$check['message'] ?>)
+				<input type="checkbox" name="plugin_status"<?php echo (get_option('wpbb_plugin_status') == 'enabled') ? ' checked="checked"' : ''; echo ($check['code'] == 0) ? '' : ' disabled="disabled"'; ?> /> (<?php echo ($check['code'] == 0) ? __('Allowed by both parts', 'wpbb-sync') : __('Not allowed: ', 'wpbb-sync').$check['message'] ?>)
 			</td>
 		</tr>
 	</table>
 	<p class="submit">
-		<input type="submit" name="Submit" value="<?php _e('Save Changes', $textdomain); ?>" />
+		<input class="button-primary" type="submit" name="Submit" value="<?php _e('Save Changes', 'wpbb-sync'); ?>" />
 	</p>
 	</form>
 </div>
@@ -860,7 +864,7 @@ function deactivate_wpbb()
 function wpbb_post_options()
 {
 	global $post;
-	echo '<div class="postbox"><h3>bbPress syncronization</h3><div class="inside"><p>Syncronize post comments with bbPress?  ';
+	echo '<div class="postbox"><h3>'.__('bbPress syncronization', 'wpbb-sync').'</h3><div class="inside"><p>'.__('Syncronize post comments with bbPress?', 'wpbb-sync').'  ';
 	if (get_post_meta($post->ID, 'wpbb_sync_comments', true) == 'no') 
 	{
 		$checked = '';
@@ -906,7 +910,7 @@ function wpbb_comments_array_count($comments)
 		}
 		// FIXME: dirty hack to get last array element
 		$comments[count($comments)-1]->comment_content .= '<br/><p class="wpbb_continue_discussion">'.
-			__("Please continue disussion on the forum: ")."<a href='$link'> link</a></p>";
+			__('Please continue disussion on the forum: ', 'wpbb-sync')."<a href='$link'> link</a></p>";
 	}
 	if ($max == -1)
 		return $comments;
