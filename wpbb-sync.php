@@ -3,7 +3,7 @@
 Plugin Name: WordPress-bbPress syncronization
 Plugin URI: http://bobrik.name/
 Description: Sync your WordPress comments to bbPress forum and back.
-Version: 0.5.2
+Version: 0.6.0
 Author: Ivan Babrou <ibobrik@gmail.com>
 Author URI: http://bobrik.name/
 
