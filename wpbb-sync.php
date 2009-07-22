@@ -3,7 +3,7 @@
 Plugin Name: WordPress-bbPress syncronization
 Plugin URI: http://bobrik.name/
 Description: Sync your WordPress comments to bbPress forum and back.
-Version: 0.6.0
+Version: 0.7.0
 Author: Ivan Babrou <ibobrik@gmail.com>
 Author URI: http://bobrik.name/
 
@@ -32,7 +32,7 @@ $min_version = 0.60;
 // for mode checking
 $wpbb_plugin = 0;
 
-function add_textdomain()
+function wpbb_add_textdomain()
 {
 	// setting textdomain for translation
 	load_plugin_textdomain('wpbb-sync', false, 'wordpress-bbpress-syncronization');
@@ -47,6 +47,8 @@ function afterpost($id)
 	$post = get_post($comment->comment_post_ID);
 	if (!is_enabled_for_post($post->ID))
 		return; // sync disabled for that post
+	if (!do_ping_sync($comment))
+		return;
 	// do not sync if not enabled for that status
 	if (!sync_that_status($comment->comment_ID))
 		return;
@@ -74,6 +76,8 @@ function afteredit($id)
 	$post = get_post($comment->comment_post_ID);
 	if (!is_enabled_for_post($post->ID))
 		return; // sync disabled for that post
+	if (!do_ping_sync($comment))
+		return;
 	$row = get_table_item('wp_comment_id', $comment->comment_ID);
 	if ($row)
 	{
@@ -190,6 +194,19 @@ function sync_that_status($id)
 		return false;
 }
 
+function do_ping_sync(&$comment)
+{
+	if ($comment->comment_type != '') // not a normal comment(pingback or trackback)
+	{
+		if (get_option('wpbb_pings') == 'disabled' || !get_option('wpbb_pings'))
+			return false;
+		if (get_option('wpbb_pings') == 'show_url')
+			$comment->comment_author = 'Ping: '.preg_replace('/.*?:\/\/([^\/]*)\/.*/', '${1}', $comment->comment_author_url);
+		return true;
+	}
+	return true;
+}
+
 function is_enabled_for_post($post_id)
 {
 	if (get_post_meta($post_id, 'wpbb_sync_comments', true) == 'yes')
@@ -201,24 +218,35 @@ function is_enabled_for_post($post_id)
 
 // ===== start of bb functions =====
 
-function create_bb_topic($post)
+function bb_first_post_text($post)
+{
+	$type = get_option('wpbb_first_post_type');
+	if ($type == 'excerpt' && !empty($post->post_excerpt)) // excerpt cannot be empty
+		return (get_option('wpbb_quote_first_post') == 'enabled' ? '<blockquote>' : '').
+			$post->post_excerpt.
+			(get_option('wpbb_quote_first_post') == 'enabled' ? '</blockquote>' : '');
+	elseif ($type == 'full')
+		return (get_option('wpbb_quote_first_post') == 'enabled' ? '<blockquote>' : '').
+			$post->post_content.
+			(get_option('wpbb_quote_first_post') == 'enabled' ? '</blockquote>' : '');
+	else // default if option not set
+		return (get_option('wpbb_quote_first_post') == 'enabled' ? '<blockquote>' : '').
+			(strpos($post->post_content, '<!--more-->') === false ? $post->post_content : substr($post->post_content, 0, $morepos)).(get_option('wpbb_quote_first_post') == 'enabled' ? '</blockquote>' : '');
+}
+
+function create_bb_topic(&$post)
 {
 	$tags = array();
 	foreach (wp_get_post_tags($post->ID) as $tag)
 	{
 		$tags[] = $tag->name;
 	}
-	$morepos = strpos($post->post_content, '<!--more-->');
-	$post_content = $morepos === false ? $post->post_content : substr($post->post_content, 0, $morepos);
-	if (get_option('wpbb_quote_first_post') == 'enabled')
-	{
-		$post_content = '<blockquote>'.$post_content.'</blockquote>';
-	}
+	$post_content = bb_first_post_text($post);
 	$post_content .= '<br/><a href="'.get_permalink($post->ID).'">'.$post->post_title.'</a>';
 	$request = array(
 		'action' => 'create_topic',
 		'topic' => apply_filters('the_title', $post->post_title),
-		'post_content' => apply_filters('the_content', $post_content),
+		'post_content' => wpbb_correct_links(apply_filters('the_content', $post_content)),
 		'user' => $post->post_author,
 		'tags' => implode(', ', $tags),
 		'post_id' => $post->ID,
@@ -230,11 +258,11 @@ function create_bb_topic($post)
 	return add_table_item($post->ID, 0, $data['topic_id'], $data['post_id']);
 }
 
-function continue_bb_topic($post, $comment)
+function continue_bb_topic(&$post, &$comment)
 {
 	$request = array(
 		'action' => 'continue_topic',
-		'post_content' => apply_filters('comment_text', $comment->comment_content),
+		'post_content' => wpbb_correct_links(apply_filters('comment_text', $comment->comment_content)),
 		'post_id' => $post->ID,
 		'comment_id' => $comment->comment_ID,
 		'user' => $comment->user_id,
@@ -248,11 +276,11 @@ function continue_bb_topic($post, $comment)
 	add_table_item($post->ID, $comment->comment_ID, $data['topic_id'], $data['post_id']);
 }
 
-function edit_bb_post($post, $comment)
+function edit_bb_post(&$post, &$comment)
 {
 	$request = array(
 		'action' => 'edit_post',
-		'post_content' => apply_filters('comment_text', $comment->comment_content),
+		'post_content' => wpbb_correct_links(apply_filters('comment_text', $comment->comment_content)),
 		'post_id' => $post->ID,
 		'comment_id' => $comment->comment_ID,
 		'user' => $comment->user_id,
@@ -266,20 +294,15 @@ function edit_bb_post($post, $comment)
 
 function edit_bb_first_post($post_id)
 {
-	$post = get_post($post_id, ARRAY_A);
-	$morepos = strpos($post['post_content'], '<!--more-->');
-	$post_content = $morepos === false ? $post['post_content'] : substr($post['post_content'], 0, $morepos);
-	if (get_option('wpbb_quote_first_post') == 'enabled')
-	{
-		$post_content = '<blockquote>'.$post_content.'</blockquote>';
-	}
-	$post_content .= '<br/><a href="'.get_permalink($post['ID']).'">'.$post['post_title'].'</a>';
+	$post = get_post($post_id);
+	$post_content = bb_first_post_text($post);
+	$post_content .= '<br/><a href="'.get_permalink($post->ID).'">'.$post->post_title.'</a>';
 	$request = array(
 		'action' => 'edit_post',
 		'get_row_by' => 'wp_post',
-		'topic_title' => apply_filters('the_title', $post['post_title']), // editing topic title
-		'post_content' => apply_filters('the_content', $post_content),
-		'post_id' => $post['ID'],
+		'topic_title' => apply_filters('the_title', $post->post_title),
+		'post_content' => wpbb_correct_links(apply_filters('the_content', $post_content)),
+		'post_id' => $post->ID,
 		'comment_id' => 0, // post, not a comment
 		'user' => $comment->user_id,
 		'comment_approved' => 1 // approved
@@ -685,6 +708,10 @@ function wpbb_install()
 		update_option('wpbb_create_topic_anyway', 'disabled');
 		update_option('wpbb_topic_after_posting', 'disabled');
 	}
+	if (!get_option('wpbb_pings'))
+		update_option('wpbb_pings', 'disabled');
+	if (get_option('wpbb_quote_first_post') == 'enabled')
+		update_option('wpbb_first_post_type', 'quoted_more_tag');
 	// next options must be cheched by another conditions!
 }
 
@@ -742,6 +769,8 @@ function wpbb_config() {
 		update_option('wpbb_point_to_forum', $_POST['point_to_forum'] == 'on' ? 'enabled' : 'disabled');
 		update_option('wpbb_create_topic_anyway', $_POST['create_topic_anyway'] == 'on' ? 'enabled' : 'disabled');
 		update_option('wpbb_topic_after_posting', $_POST['topic_after_posting'] == 'on' ? 'enabled' : 'disabled');
+		update_option('wpbb_pings', $_POST['pings']);
+		update_option('wpbb_first_post_type', $_POST['first_post_type']);
 	}
 
 ?>
@@ -817,6 +846,16 @@ function wpbb_config() {
 			</td>
 		</tr>
 		<tr valign="baseline">
+			<th scope="row"><?php _e('First post type', 'wpbb-sync'); ?></th>
+			<td>
+				<select name="first_post_type">
+					<option value="full"<?php echo (get_option('wpbb_first_post_type') == 'full' ? ' selected="selected"':''); ?>><?php _e('Full post', 'wpbb-sync'); ?></option>
+					<option value="more_tag"<?php echo (get_option('wpbb_first_post_type') == 'more_tag' ? ' selected="selected"':''); ?>><?php _e('Post before &lt;!--more--&gt; tag', 'wpbb-sync'); ?></option>
+					<option value="excerpt"<?php echo (get_option('wpbb_first_post_type') == 'excerpt' ? ' selected="selected"':''); ?>><?php _e('Excerpt', 'wpbb-sync'); ?></option>
+				</select> (<?php _e('Select what text for the first post will be displayed in forum topic', 'wpbb-sync'); ?>)
+			</td>
+		</tr>
+		<tr valign="baseline">
 			<th scope="row"><?php _e('Enable quoting', 'wpbb-sync'); ?></th>
 			<td>
 				<input type="checkbox" name="enable_quoting"<?php echo (get_option('wpbb_quote_first_post') == 'enabled') ? ' checked="checked"' : '';?> /> (<?php _e('If enabled, first post summary in bbPress will be blockquoted', 'wpbb-sync'); ?>)
@@ -831,13 +870,23 @@ function wpbb_config() {
 		<tr valign="baseline">
 			<th scope="row"><?php _e('Point to forum in latest comment', 'wpbb-sync'); ?></th>
 			<td>
-				<input type="checkbox" name="point_to_forum"<?php echo (get_option('wpbb_point_to_forum') == 'enabled') ? ' checked="checked"' : ''; ?> /> (<?php _e('If enabled, last comment will have link to forum discussion. Don\'t set previvous option to 0 to use that', 'wpbb-sync'); ?>)
+				<input type="checkbox" name="point_to_forum"<?php echo (get_option('wpbb_point_to_forum') == 'enabled') ? ' checked="checked"' : ''; ?> /> (<?php _e('If enabled, last comment will have link to forum discussion. Don\'t set previvous option to 0 to use that. It is better to use template functions', 'wpbb-sync'); ?>)
 			</td>
 		</tr>
 		<tr valign="baseline">
 			<th scope="row"><?php _e('Max comments with form', 'wpbb-sync'); ?></th>
 			<td>
 				<input type="text" name="max_comments_with_form" value="<?php echo get_option('wpbb_max_comments_with_form'); ?>" /> (<?php _e('Set to <em>-1</em> to show new comment form with any comments count', 'wpbb-sync'); ?>)
+			</td>
+		</tr>
+		<tr valign="baseline">
+			<th scope="row"><?php _e('PingBacks & Trackbacks', 'wpbb-sync'); ?></th>
+			<td>
+				<select name="pings">
+					<option value="disabled"<?php echo (get_option('wpbb_pings') == 'disabled' ? ' selected="selected"':''); ?>><?php _e('Disable', 'wpbb-sync'); ?></option>
+					<option value="show_url"<?php echo (get_option('wpbb_pings') == 'show_url' ? ' selected="selected"':''); ?>><?php _e('Show site url as username', 'wpbb-sync'); ?></option>
+				</select>
+				(<?php _e('Select what to do with pings. URLs will be shorten to domain name', 'wpbb-sync'); ?>)
 			</td>
 		</tr>
 		<tr valign="baseline">
@@ -892,6 +941,8 @@ function wpbb_store_post_options($post_id)
 
 function wpbb_comments_array_count($comments)
 {
+	if (get_option('wpbb_plugin_status') != 'enabled')
+		return; // plugin disabled
 	$maxform = get_option('wpbb_max_comments_with_form');
 	global $post;
 	if ($maxform != -1 and count($comments) > $maxform)
@@ -931,8 +982,37 @@ function correct_bbwp_version()
 	return ($answer['version'] < $min_version) ? 0 : 1;
 }
 
+function wpbb_correct_links($text)
+{
+	$siteurl = preg_replace('|(://[^/]+/)(.*)|', '${1}', get_option('siteurl'));
+	$current_url = substr($siteurl, 0, -1).preg_replace('|(.*/)[^/]*|', '${1}', $_SERVER['REQUEST_URI']);
+	// ':' is for protocol handling, must be replaced by '(://)', but doesn't work :-(
+	// for absolute links with starting '/'
+	$text = preg_replace('|([(href)(src)])=(["\'])/([^"\':]+)\2|', '${1}=${2}'.$siteurl.'${3}${2}', $text);
+	// for links not starting with '/'
+	return preg_replace('|([(href)(src)])=(["\'])([^"\':]+)\2|', '${1}=${2}'.$current_url.'${3}${2}', $text);
+}
 
-add_action('init', 'add_textdomain');
+function wpbb_forum_thread_exists()
+{
+	global $post;
+	$row = get_table_item('wp_post_id', $post->ID);
+	if ($row)
+		return true;
+	else
+		return false;
+}
+
+function wpbb_forum_thread_url()
+{
+	global $post;
+	$row = get_table_item('wp_post_id', $post->ID);
+	$answer = unserialize(send_command(array('action' => 'get_topic_link', 'topic_id' => $row['bb_topic_id'])));
+	return $answer['link'];
+}
+
+
+add_action('init', 'wpbb_add_textdomain');
 add_action('deactivate_wordpress-bbpress-syncronization/wpbb-sync.php', 'deactivate_wpbb');
 add_action('comment_post', 'afterpost');
 add_action('edit_comment', 'afteredit');

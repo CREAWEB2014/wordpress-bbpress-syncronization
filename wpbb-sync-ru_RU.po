@@ -1,159 +1,207 @@
 # WordPress - bbPress syncronization plugin.
 # Copyright (C) Ivan Babrou
 # This file is distributed under the same license as the wordpress-bbpress syncronization package.
-# Ivan Babrou <ibobrik@gmail.com>, 2009.
 #
-#, fuzzy
+# Ivan Babrou <ibobrik@gmail.com>, 2009.
 msgid ""
 msgstr ""
 "Project-Id-Version: wordpress-bbpress-syncronization-ru_RU\n"
 "Report-Msgid-Bugs-To: ibobrik@gmail.com\n"
-"POT-Creation-Date: 2009-07-06 13:13+0300\n"
-"PO-Revision-Date: 2009-07-06 13:27+0030\n"
+"POT-Creation-Date: 2009-07-22 16:09+0300\n"
+"PO-Revision-Date: 2009-07-22 16:55+0300\n"
 "Last-Translator: Ivan Babrou <ibobrik@gmail.com>\n"
-"Language-Team: Russian <ru@li.org>\n"
+"Language-Team: Ivan Babrou <ibobrik@gmail.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Lokalize 1.0\n"
 
-#: wpbb-sync.php:438 wpbb-sync.php:578 wpbb-sync.php:766 wpbb-sync.php:787
+#: wpbb-sync.php:460 wpbb-sync.php:600 wpbb-sync.php:794 wpbb-sync.php:815
 msgid "Everything is ok!"
 msgstr "Всё в порядке!"
 
-#: wpbb-sync.php:440
+#: wpbb-sync.php:462
 msgid "Cannot establish connection to bbPress part"
 msgstr "Невозможно установить соединение с bbPress составляющей"
 
-#: wpbb-sync.php:442
+#: wpbb-sync.php:464
 msgid "Invalid secret key"
 msgstr "Неверный секретный ключ"
 
-#: wpbb-sync.php:444
+#: wpbb-sync.php:466
 msgid "Too old bbPress part plugin version"
 msgstr "Слишком старая версия bbPress составляющей"
 
-#: wpbb-sync.php:726 wpbb-sync.php:750 wpbb-sync.php:868
+#: wpbb-sync.php:752 wpbb-sync.php:778 wpbb-sync.php:916
 msgid "bbPress syncronization"
 msgstr "Синхронизация с bbPress"
 
-#: wpbb-sync.php:755
+#: wpbb-sync.php:783
 msgid "bbPress plugin url"
 msgstr "Адрес плагина bbPress"
 
-#: wpbb-sync.php:761
+#: wpbb-sync.php:789
 msgid ""
 "bbPress url (we'll add <em>my-plugins/wordpress-bbpress-syncronization/bbwp-"
 "sync.php</em> to your url)"
-msgstr "адрес bbPress (мы автоматически добавим <em>my-plugins/wordpress-bbpress-syncronization/bbwp-"
-"sync.php</em> в его конец)"
+msgstr ""
+"Адрес bbPress (мы автоматически добавим <em>my-plugins/wordpress-bbpress-"
+"syncronization/bbwp-sync.php</em> в его конец)"
 
-#: wpbb-sync.php:769
+#: wpbb-sync.php:797
 msgid "URL is incorrect or connection error, please verify it (full variant): "
-msgstr "Адрес неверен или ошибка соединения, проверьте адрес (полный вариант): "
+msgstr ""
+"Адрес неверен или ошибка соединения, проверьте адрес (полный вариант): "
 
-#: wpbb-sync.php:776
+#: wpbb-sync.php:804
 msgid "Secret key"
 msgstr "Секретный ключ"
 
-#: wpbb-sync.php:782
+#: wpbb-sync.php:810
 msgid "We need it for secure communication between your systems"
 msgstr "Ключ необходим для безопасной связи между частями системы"
 
-#: wpbb-sync.php:790
+#: wpbb-sync.php:818
 msgid "Error! Not equal secret keys in WordPress and bbPress"
 msgstr "Ошибка! Различные секретные ключи в WordPress и bbPress"
 
-#: wpbb-sync.php:797
+#: wpbb-sync.php:825
 msgid "Sync comments by default"
 msgstr "Синхронизировать комментарии по умолчанию"
 
-#: wpbb-sync.php:799
+#: wpbb-sync.php:827
 msgid "Also will be used for posts without any sync option value"
-msgstr "Также будет использоваться для постов без установленной опции синхронизации"
+msgstr ""
+"Также будет использоваться для постов без установленной опции синхронизации"
 
-#: wpbb-sync.php:803
+#: wpbb-sync.php:831
 msgid "Create topic on posting"
 msgstr "Создавать тему в форуме при публикации"
 
-#: wpbb-sync.php:805
+#: wpbb-sync.php:833
 msgid "Will create topic in bbPress after WordPress post publishing"
 msgstr "Будет создавать тему в bbPress после публикации в WordPress"
 
-#: wpbb-sync.php:809
+#: wpbb-sync.php:837
 msgid "Sync all comments"
 msgstr "Синхронизировать все комментарии"
 
-#: wpbb-sync.php:811
+#: wpbb-sync.php:839
 msgid ""
 "Sync comment even if not approved. Comment will have the same status at forum"
-msgstr "Синхронизировать комментарий, даже если он не одобрен. Комментарий будет иметь тот же статус на форуме"
+msgstr ""
+"Синхронизировать комментарий, даже если он не одобрен. Комментарий будет "
+"иметь тот же статус на форуме"
 
-#: wpbb-sync.php:815
+#: wpbb-sync.php:843
 msgid "Create topic anyway"
 msgstr "Создать тему в любом случае"
 
-#: wpbb-sync.php:817
+#: wpbb-sync.php:845
 msgid ""
 "Create topic even if comment not approved. Will create topic "
 "<strong>without</strong> unapproved comment, only first post"
-msgstr "Создавать тему на форуме, даже если комментарий не одобрен. Будет создана тема "
-"<strong>без</strong> неодобренного комментария, только с первым постом"
+msgstr ""
+"Создавать тему на форуме, даже если комментарий не одобрен. Будет создана "
+"тема <strong>без</strong> неодобренного комментария, только с первым постом"
 
-#: wpbb-sync.php:821
+#: wpbb-sync.php:849
+msgid "First post type"
+msgstr "Тип первого поста"
+
+#: wpbb-sync.php:852
+msgid "Full post"
+msgstr "Весь текст"
+
+#: wpbb-sync.php:853
+msgid "Post before &lt;!--more--&gt; tag"
+msgstr "Текст до тега &lt;!--more--&gt;"
+
+#: wpbb-sync.php:854
+msgid "Excerpt"
+msgstr "Выборка (Excerpt)"
+
+#: wpbb-sync.php:855
+msgid "Select what text for the first post will be displayed in forum topic"
+msgstr ""
+"Выберите, какой текст для первого сообщения на форуме будет использован"
+
+#: wpbb-sync.php:859
 msgid "Enable quoting"
 msgstr "Включить цитирование"
 
-#: wpbb-sync.php:823
+#: wpbb-sync.php:861
 msgid "If enabled, first post summary in bbPress will be blockquoted"
-msgstr "Если включено, первый пост в bbPress будет взят как цитата"
+msgstr "Если включено, первый пост в bbPress будет оформлен как цитата"
 
-#: wpbb-sync.php:827
+#: wpbb-sync.php:865
 msgid "Amount of comments to show"
 msgstr "Количество отображаемых комментариев"
 
-#: wpbb-sync.php:829
+#: wpbb-sync.php:867
 msgid "Set to <em>-1</em> to show all comments"
 msgstr "Выставьте в <em>-1</em> для отображения всех комментариев"
 
-#: wpbb-sync.php:833
+#: wpbb-sync.php:871
 msgid "Point to forum in latest comment"
 msgstr "Ссылаться на форум в последнем комментарии"
 
-#: wpbb-sync.php:835
+#: wpbb-sync.php:873
 msgid ""
 "If enabled, last comment will have link to forum discussion. Don't set "
-"previvous option to 0 to use that"
-msgstr "Если включено, последний комментарий будет иметь ссылку на дискуссию на форуме. "
-"Не устанавливайте предыдущую опцию в 0 для использования этого"
+"previvous option to 0 to use that. It is better to use template functions"
+msgstr ""
+"Если включено, последний комментарий будет иметь ссылку на дискуссию на "
+"форуме. Не устанавливайте предыдущую опцию в 0 для использования этого. "
+"Предпочтительнее использовать template functions"
 
-#: wpbb-sync.php:839
+#: wpbb-sync.php:877
 msgid "Max comments with form"
 msgstr "Максимум комментариев с формой"
 
-#: wpbb-sync.php:841
+#: wpbb-sync.php:879
 msgid "Set to <em>-1</em> to show new comment form with any comments count"
-msgstr "Выставьте в <em>-1</em> для отображения формы для комментариев в любом случае"
+msgstr ""
+"Выставьте в <em>-1</em> для отображения формы для комментариев в любом случае"
 
-#: wpbb-sync.php:845
+#: wpbb-sync.php:883
+msgid "PingBacks & Trackbacks"
+msgstr ""
+
+#: wpbb-sync.php:886
+msgid "Disable"
+msgstr "Отключить"
+
+#: wpbb-sync.php:887
+msgid "Show site url as username"
+msgstr "Использовать URL как имя пользователя"
+
+#: wpbb-sync.php:889
+msgid "Select what to do with pings. URLs will be shorten to domain name"
+msgstr "Выберите, что делать с пингами. URL будут укорочены до доменного имени"
+
+#: wpbb-sync.php:893
 msgid "Enable plugin"
 msgstr "Включить плагин"
 
-#: wpbb-sync.php:847
+#: wpbb-sync.php:895
 msgid "Allowed by both parts"
 msgstr "Разрешено обеими составляющими"
 
-#: wpbb-sync.php:847
+#: wpbb-sync.php:895
 msgid "Not allowed: "
 msgstr "Не разрешено: "
 
-#: wpbb-sync.php:852
+#: wpbb-sync.php:900
 msgid "Save Changes"
 msgstr "Сохранить изменения"
 
-#: wpbb-sync.php:868
+#: wpbb-sync.php:916
 msgid "Syncronize post comments with bbPress?"
 msgstr "Синхронизировать комментарии с bbPress?"
 
-#: wpbb-sync.php:914
+#: wpbb-sync.php:964
 msgid "Please continue disussion on the forum: "
 msgstr "Продолжение дискуссии на форуме: "
+
+
