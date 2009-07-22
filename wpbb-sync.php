@@ -3,7 +3,7 @@
 Plugin Name: WordPress-bbPress syncronization
 Plugin URI: http://bobrik.name/
 Description: Sync your WordPress comments to bbPress forum and back.
-Version: 0.7.0
+Version: 0.7.1
 Author: Ivan Babrou <ibobrik@gmail.com>
 Author URI: http://bobrik.name/
 
@@ -615,7 +615,11 @@ if (isset($_REQUEST['wpbb-listener']))
 
 function wpbb_listener()
 {
-	// TODO: catching commands
+	if (empty($_POST['action']))
+	{
+		echo "If you see that, plugin must connect well.";
+		exit;
+	}
 	set_current_user($_POST['user']);
 	//error_log("GOT COMMAND for WordPress part: ".$_POST['action']);
 	if ($_POST['action'] == 'test')
@@ -784,6 +788,7 @@ function wpbb_config() {
 			<td>
 				<input type="text" name="bbpress_url" value="<?php echo get_option('wpbb_bbpress_url'); ?>" />
 				<?php
+				$err = check_wp_settings(); // only one error at once, let's show other if only previvous was fixed
 				if (!get_option('wpbb_bbpress_url') && test_pair())
 				{
 					_e('bbPress url (we\'ll add <em>my-plugins/wordpress-bbpress-syncronization/bbwp-sync.php</em> to your url)', 'wpbb-sync');
@@ -794,7 +799,9 @@ function wpbb_config() {
 						_e('Everything is ok!', 'wpbb-sync');
 					} else
 					{
-						echo  __('URL is incorrect or connection error, please verify it (full variant): ', 'wpbb-sync').get_option('wpbb_bbpress_url').'my-plugins/wordpress-bbpress-syncronization/bbwp-sync.php';
+						echo  '<b>'.__('URL is incorrect or connection error, please verify it (full variant): ', 'wpbb-sync').
+							'<a href="'.get_option('wpbb_bbpress_url').'my-plugins/wordpress-bbpress-syncronization/bbwp-sync.php">'.
+							get_option('wpbb_bbpress_url').'my-plugins/wordpress-bbpress-syncronization/bbwp-sync.php</a></b>';
 					}
 				}
 				?>
@@ -805,7 +812,7 @@ function wpbb_config() {
 			<td>
 				<input type="text" name="secret_key" value="<?php echo get_option('wpbb_secret_key', 'wpbb-sync'); ?>" />
 				<?php
-				if (!get_option('wpbb_secret_key'))
+				if (!get_option('wpbb_secret_key') || ($err != 0 && $err != 2))
 				{
 					_e('We need it for secure communication between your systems', 'wpbb-sync');
 				} else
@@ -815,7 +822,7 @@ function wpbb_config() {
 						_e('Everything is ok!', 'wpbb-sync');
 					} else
 					{
-						_e('Error! Not equal secret keys in WordPress and bbPress', 'wpbb-sync');
+						echo '<b>'.__('Error! Not equal secret keys in WordPress and bbPress', 'wpbb-sync').'</b>';
 					}
 				}
 				?>
@@ -890,7 +897,7 @@ function wpbb_config() {
 			</td>
 		</tr>
 		<tr valign="baseline">
-			<th scope="row"><?php _e('Enable plugin', 'wpbb-sync'); ?></th>
+			<th scope="row" style="font-weight:bold"><?php _e('Enable plugin', 'wpbb-sync'); ?></th>
 			<td><?php $check = check_wpbb_settings(); if ($check['code'] != 0) set_global_plugin_status('disabled'); ?>
 				<input type="checkbox" name="plugin_status"<?php echo (get_option('wpbb_plugin_status') == 'enabled') ? ' checked="checked"' : ''; echo ($check['code'] == 0) ? '' : ' disabled="disabled"'; ?> /> (<?php echo ($check['code'] == 0) ? __('Allowed by both parts', 'wpbb-sync') : __('Not allowed: ', 'wpbb-sync').$check['message'] ?>)
 			</td>
