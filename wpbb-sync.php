@@ -1,9 +1,9 @@
 <?php
 /*
 Plugin Name: WordPress-bbPress syncronization
-Plugin URI: http://bobrik.name/
+Plugin URI: http://bobrik.name/code/wordpress/wordpress-bbpress-syncronization/
 Description: Sync your WordPress comments to bbPress forum and back.
-Version: 0.7.1
+Version: 0.7.2
 Author: Ivan Babrou <ibobrik@gmail.com>
 Author URI: http://bobrik.name/
 
@@ -231,7 +231,7 @@ function bb_first_post_text($post)
 			(get_option('wpbb_quote_first_post') == 'enabled' ? '</blockquote>' : '');
 	else // default if option not set
 		return (get_option('wpbb_quote_first_post') == 'enabled' ? '<blockquote>' : '').
-			(strpos($post->post_content, '<!--more-->') === false ? $post->post_content : substr($post->post_content, 0, $morepos)).(get_option('wpbb_quote_first_post') == 'enabled' ? '</blockquote>' : '');
+			(strpos($post->post_content, '<!--more-->') === false ? $post->post_content : substr($post->post_content, 0, strpos($post->post_content, '<!--more-->'))).(get_option('wpbb_quote_first_post') == 'enabled' ? '</blockquote>' : '');
 }
 
 function create_bb_topic(&$post)
