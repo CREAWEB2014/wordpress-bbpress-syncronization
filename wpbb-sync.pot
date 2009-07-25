@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: wpbb-sync.php:460 wpbb-sync.php:600 wpbb-sync.php:794 wpbb-sync.php:815
+#: wpbb-sync.php:460 wpbb-sync.php:600 wpbb-sync.php:801 wpbb-sync.php:824
 msgid "Everything is ok!"
 msgstr ""
 
@@ -32,161 +32,161 @@ msgstr ""
 msgid "Too old bbPress part plugin version"
 msgstr ""
 
-#: wpbb-sync.php:752 wpbb-sync.php:778 wpbb-sync.php:916
+#: wpbb-sync.php:758 wpbb-sync.php:784 wpbb-sync.php:925
 msgid "bbPress syncronization"
 msgstr ""
 
-#: wpbb-sync.php:783
-msgid "bbPress plugin url"
+#: wpbb-sync.php:789
+msgid "bbPress url"
 msgstr ""
 
-#: wpbb-sync.php:789
+#: wpbb-sync.php:796
 msgid ""
 "bbPress url (we'll add <em>my-plugins/wordpress-bbpress-syncronization/bbwp-"
 "sync.php</em> to your url)"
 msgstr ""
 
-#: wpbb-sync.php:797
+#: wpbb-sync.php:804
 msgid "URL is incorrect or connection error, please verify it (full variant): "
 msgstr ""
 
-#: wpbb-sync.php:804
+#: wpbb-sync.php:813
 msgid "Secret key"
 msgstr ""
 
-#: wpbb-sync.php:810
+#: wpbb-sync.php:819
 msgid "We need it for secure communication between your systems"
 msgstr ""
 
-#: wpbb-sync.php:818
+#: wpbb-sync.php:827
 msgid "Error! Not equal secret keys in WordPress and bbPress"
 msgstr ""
 
-#: wpbb-sync.php:825
+#: wpbb-sync.php:834
 msgid "Sync comments by default"
 msgstr ""
 
-#: wpbb-sync.php:827
+#: wpbb-sync.php:836
 msgid "Also will be used for posts without any sync option value"
 msgstr ""
 
-#: wpbb-sync.php:831
+#: wpbb-sync.php:840
 msgid "Create topic on posting"
 msgstr ""
 
-#: wpbb-sync.php:833
+#: wpbb-sync.php:842
 msgid "Will create topic in bbPress after WordPress post publishing"
 msgstr ""
 
-#: wpbb-sync.php:837
+#: wpbb-sync.php:846
 msgid "Sync all comments"
 msgstr ""
 
-#: wpbb-sync.php:839
+#: wpbb-sync.php:848
 msgid ""
 "Sync comment even if not approved. Comment will have the same status at forum"
 msgstr ""
 
-#: wpbb-sync.php:843
+#: wpbb-sync.php:852
 msgid "Create topic anyway"
 msgstr ""
 
-#: wpbb-sync.php:845
+#: wpbb-sync.php:854
 msgid ""
 "Create topic even if comment not approved. Will create topic "
 "<strong>without</strong> unapproved comment, only first post"
 msgstr ""
 
-#: wpbb-sync.php:849
+#: wpbb-sync.php:858
 msgid "First post type"
 msgstr ""
 
-#: wpbb-sync.php:852
+#: wpbb-sync.php:861
 msgid "Full post"
 msgstr ""
 
-#: wpbb-sync.php:853
+#: wpbb-sync.php:862
 msgid "Post before &lt;!--more--&gt; tag"
 msgstr ""
 
-#: wpbb-sync.php:854
+#: wpbb-sync.php:863
 msgid "Excerpt"
 msgstr ""
 
-#: wpbb-sync.php:855
+#: wpbb-sync.php:864
 msgid "Select what text for the first post will be displayed in forum topic"
 msgstr ""
 
-#: wpbb-sync.php:859
+#: wpbb-sync.php:868
 msgid "Enable quoting"
 msgstr ""
 
-#: wpbb-sync.php:861
+#: wpbb-sync.php:870
 msgid "If enabled, first post summary in bbPress will be blockquoted"
 msgstr ""
 
-#: wpbb-sync.php:865
+#: wpbb-sync.php:874
 msgid "Amount of comments to show"
 msgstr ""
 
-#: wpbb-sync.php:867
+#: wpbb-sync.php:876
 msgid "Set to <em>-1</em> to show all comments"
 msgstr ""
 
-#: wpbb-sync.php:871
+#: wpbb-sync.php:880
 msgid "Point to forum in latest comment"
 msgstr ""
 
-#: wpbb-sync.php:873
+#: wpbb-sync.php:882
 msgid ""
 "If enabled, last comment will have link to forum discussion. Don't set "
 "previvous option to 0 to use that. It is better to use template functions"
 msgstr ""
 
-#: wpbb-sync.php:877
+#: wpbb-sync.php:886
 msgid "Max comments with form"
 msgstr ""
 
-#: wpbb-sync.php:879
+#: wpbb-sync.php:888
 msgid "Set to <em>-1</em> to show new comment form with any comments count"
 msgstr ""
 
-#: wpbb-sync.php:883
+#: wpbb-sync.php:892
 msgid "PingBacks & Trackbacks"
 msgstr ""
 
-#: wpbb-sync.php:886
+#: wpbb-sync.php:895
 msgid "Disable"
 msgstr ""
 
-#: wpbb-sync.php:887
+#: wpbb-sync.php:896
 msgid "Show site url as username"
 msgstr ""
 
-#: wpbb-sync.php:889
+#: wpbb-sync.php:898
 msgid "Select what to do with pings. URLs will be shorten to domain name"
 msgstr ""
 
-#: wpbb-sync.php:893
+#: wpbb-sync.php:902
 msgid "Enable plugin"
 msgstr ""
 
-#: wpbb-sync.php:895
+#: wpbb-sync.php:904
 msgid "Allowed by both parts"
 msgstr ""
 
-#: wpbb-sync.php:895
+#: wpbb-sync.php:904
 msgid "Not allowed: "
 msgstr ""
 
-#: wpbb-sync.php:900
+#: wpbb-sync.php:909
 msgid "Save Changes"
 msgstr ""
 
-#: wpbb-sync.php:916
+#: wpbb-sync.php:925
 msgid "Syncronize post comments with bbPress?"
 msgstr ""
 
-#: wpbb-sync.php:964
+#: wpbb-sync.php:976
 msgid "Please continue disussion on the forum: "
 msgstr ""

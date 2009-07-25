@@ -3,7 +3,7 @@
 Plugin Name: WordPress-bbPress syncronization
 Plugin URI: http://bobrik.name/code/wordpress/wordpress-bbpress-syncronization/
 Description: Sync your WordPress comments to bbPress forum and back.
-Version: 0.7.2
+Version: 0.7.3
 Author: Ivan Babrou <ibobrik@gmail.com>
 Author URI: http://bobrik.name/
 
@@ -716,6 +716,8 @@ function wpbb_install()
 		update_option('wpbb_pings', 'disabled');
 	if (get_option('wpbb_quote_first_post') == 'enabled')
 		update_option('wpbb_first_post_type', 'quoted_more_tag');
+	if (!get_option('wpbb_regards'))
+		update_option('wpbb_regards', 'enabled');
 	// next options must be cheched by another conditions!
 }
 
@@ -784,7 +786,7 @@ function wpbb_config() {
 	<input type="hidden" name="stage" value="process" />
 	<table width="100%" cellspacing="2" cellpadding="5" class="form-table">
 		<tr valign="baseline">
-			<th scope="row"><?php _e("bbPress plugin url", 'wpbb-sync'); ?></th>
+			<th scope="row"><?php _e("bbPress url", 'wpbb-sync'); ?></th>
 			<td>
 				<input type="text" name="bbpress_url" value="<?php echo get_option('wpbb_bbpress_url'); ?>" />
 				<?php
@@ -948,8 +950,11 @@ function wpbb_store_post_options($post_id)
 
 function wpbb_comments_array_count($comments)
 {
+	global $post;
 	if (get_option('wpbb_plugin_status') != 'enabled')
 		return; // plugin disabled
+	if (!is_enabled_for_post($post->ID))
+		return;
 	$maxform = get_option('wpbb_max_comments_with_form');
 	global $post;
 	if ($maxform != -1 and count($comments) > $maxform)
@@ -1018,6 +1023,12 @@ function wpbb_forum_thread_url()
 	return $answer['link'];
 }
 
+function wpbb_footer()
+{
+	if (!get_option('wpbb_regards') || get_option('wpbb_regards') == 'enabled')
+		echo "[ bbPress <a href='http://http://bobrik.name/code/wordpress/wordpress-bbpress-syncronization/'>synchronization</a> by <a href='http://bobrik.name/cv'>bobrik</a> ]";
+}
+
 
 add_action('init', 'wpbb_add_textdomain');
 add_action('deactivate_wordpress-bbpress-syncronization/wpbb-sync.php', 'deactivate_wpbb');
@@ -1036,5 +1047,6 @@ add_action('publish_post', 'wpbb_store_post_options');
 add_action('save_post', 'wpbb_store_post_options');
 add_action('publish_post', 'afterpublish');
 add_filter('comments_array', 'wpbb_comments_array_count');
+add_action('wp_footer', 'wpbb_footer');
 
 ?>
