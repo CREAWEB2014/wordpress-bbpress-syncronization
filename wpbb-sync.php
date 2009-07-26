@@ -3,7 +3,7 @@
 Plugin Name: WordPress-bbPress syncronization
 Plugin URI: http://bobrik.name/code/wordpress/wordpress-bbpress-syncronization/
 Description: Sync your WordPress comments to bbPress forum and back.
-Version: 0.7.3
+Version: 0.7.4
 Author: Ivan Babrou <ibobrik@gmail.com>
 Author URI: http://bobrik.name/
 
@@ -952,15 +952,15 @@ function wpbb_comments_array_count($comments)
 {
 	global $post;
 	if (get_option('wpbb_plugin_status') != 'enabled')
-		return; // plugin disabled
+		return $comments; // plugin disabled
 	if (!is_enabled_for_post($post->ID))
-		return;
+		return $comments;
 	$maxform = get_option('wpbb_max_comments_with_form');
 	global $post;
 	if ($maxform != -1 and count($comments) > $maxform)
 		$post->comment_status = 'closed';
 	if (count($comments) == 0)
-		return; // we have nothing to change
+		return $comments; // we have nothing to change
 	$max = get_option('wpbb_comments_to_show');
 	if (get_option('wpbb_point_to_forum') == 'enabled' && $max != 0)
 	{
@@ -1007,6 +1007,8 @@ function wpbb_correct_links($text)
 
 function wpbb_forum_thread_exists()
 {
+	if (get_option('wpbb_plugin_status') != 'enabled')
+		return false; // plugin disabled
 	global $post;
 	$row = get_table_item('wp_post_id', $post->ID);
 	if ($row)
@@ -1026,7 +1028,7 @@ function wpbb_forum_thread_url()
 function wpbb_footer()
 {
 	if (!get_option('wpbb_regards') || get_option('wpbb_regards') == 'enabled')
-		echo "[ bbPress <a href='http://http://bobrik.name/code/wordpress/wordpress-bbpress-syncronization/'>synchronization</a> by <a href='http://bobrik.name/cv'>bobrik</a> ]";
+		echo "<p>[ bbPress <a href='http://bobrik.name/code/wordpress/wordpress-bbpress-syncronization/'>synchronization</a> by <a href='http://bobrik.name/cv'>bobrik</a> ]</p>";
 }
 
 
