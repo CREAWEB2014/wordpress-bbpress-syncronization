@@ -3,7 +3,7 @@
 Plugin Name: WordPress-bbPress syncronization
 Plugin URI: http://bobrik.name/code/wordpress/wordpress-bbpress-syncronization/
 Description: Sync your WordPress comments to bbPress forum and back.
-Version: 0.7.4
+Version: 0.7.5
 Author: Ivan Babrou <ibobrik@gmail.com>
 Author URI: http://bobrik.name/
 
@@ -625,17 +625,17 @@ function wpbb_listener()
 	if ($_POST['action'] == 'test')
 	{
 		echo serialize(array('test' => 1));
-		return;
+		exit;
 	} elseif ($_POST['action'] == 'keytest')
 	{
 		echo serialize(array('keytest' => compare_keys_local()));
-		return;
+		exit;
 	}
 	// here we need secret key, only if not checking settings
 	if (!secret_key_equal() && $_POST['action'] != 'check_wp_settings')
 	{
 		// go away, damn cheater!
-		return;
+		exit;
 	}
 	if ($_POST['action'] == 'set_wp_plugin_status')
 	{
@@ -653,7 +653,7 @@ function wpbb_listener()
 	if (get_option('wpbb_plugin_status') != 'enabled')
 	{
 		// stop sync
-		return;
+		exit;
 	}
 	if ($_POST['action'] == 'edit_comment')
 	{

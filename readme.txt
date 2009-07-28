@@ -3,7 +3,7 @@ Contributors: bobrik
 Tags: bbPress, post, comment, integration, forum, syncronization, sync, synchronization
 Requires at least: 2.6.0
 Tested up to: 2.8.2
-Stable tag: 0.7.4
+Stable tag: 0.7.5
 
 Sync your WordPress comments to bbPress forum and back.
 
@@ -54,6 +54,10 @@ YOU MAY HELP:
 Made for news.vitebsk.cc
 
 == Changelog ==
+
+Version 0.7.5 (28.07.2009)
+
+*  Fixed bug with crap in wordpress part responses. Now many installations will be fixed :)
 
 Version 0.7.4 (26.07.2009)
 
