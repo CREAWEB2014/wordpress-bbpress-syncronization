@@ -3,7 +3,7 @@
 Plugin Name: WordPress-bbPress syncronization
 Plugin URI: http://bobrik.name/code/wordpress/wordpress-bbpress-syncronization/
 Description: Sync your WordPress comments to bbPress forum and back.
-Version: 0.7.5
+Version: 0.7.6
 Author: Ivan Babrou <ibobrik@gmail.com>
 Author URI: http://bobrik.name/
 
@@ -26,8 +26,8 @@ Boston, MA 02111-1307, USA.
 */
 
 // for version checking
-$wpbb_version = 0.60;
-$min_version = 0.60;
+$wpbb_version = 76;
+$min_version = 60;
 
 // for mode checking
 $wpbb_plugin = 0;
@@ -617,7 +617,7 @@ function wpbb_listener()
 {
 	if (empty($_POST['action']))
 	{
-		echo "If you see that, plugin must connect well.";
+		echo 'If you see that, plugin must connect well. bbPress test response (must be a:1:{s:4:"test";i:1;}): '.send_command(array('action' => 'test'));
 		exit;
 	}
 	set_current_user($_POST['user']);
@@ -1028,7 +1028,7 @@ function wpbb_forum_thread_url()
 function wpbb_footer()
 {
 	if (!get_option('wpbb_regards') || get_option('wpbb_regards') == 'enabled')
-		echo "<p>[ bbPress <a href='http://bobrik.name/code/wordpress/wordpress-bbpress-syncronization/'>synchronization</a> by <a href='http://bobrik.name/cv'>bobrik</a> ]</p>";
+		echo '<p style="text-align:center;">[ bbPress <a href="http://bobrik.name/code/wordpress/wordpress-bbpress-syncronization/">synchronization</a> by <a href="http://bobrik.name/cv">bobrik</a> ]</p>';
 }
 
 
