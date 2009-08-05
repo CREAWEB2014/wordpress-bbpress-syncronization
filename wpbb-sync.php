@@ -3,7 +3,7 @@
 Plugin Name: WordPress-bbPress syncronization
 Plugin URI: http://bobrik.name/code/wordpress/wordpress-bbpress-syncronization/
 Description: Sync your WordPress comments to bbPress forum and back.
-Version: 0.7.6
+Version: 0.7.7
 Author: Ivan Babrou <ibobrik@gmail.com>
 Author URI: http://bobrik.name/
 
@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.
 */
 
 // for version checking
-$wpbb_version = 76;
+$wpbb_version = 77;
 $min_version = 60;
 
 // for mode checking
@@ -38,21 +38,21 @@ function wpbb_add_textdomain()
 	load_plugin_textdomain('wpbb-sync', false, 'wordpress-bbpress-syncronization');
 }
 
-function afterpost($id)
+function wpbb_afterpost($id)
 {
-	//error_log("wordpress: afterpost");
+	//error_log("wordpress: wpbb_afterpost");
 	if (!wpbb_do_sync())
 		return;
 	$comment = get_comment($id);
 	$post = get_post($comment->comment_post_ID);
-	if (!is_enabled_for_post($post->ID))
+	if (!wpbb_is_enabled_for_post($post->ID))
 		return; // sync disabled for that post
-	if (!do_ping_sync($comment))
+	if (!wpbb_do_ping_sync($comment))
 		return;
 	// do not sync if not enabled for that status
-	if (!sync_that_status($comment->comment_ID))
+	if (!wpbb_sync_that_status($comment->comment_ID))
 		return;
-	$row = get_table_item('wp_post_id', $comment->comment_post_ID);
+	$row = wpbb_get_table_item('wp_post_id', $comment->comment_post_ID);
 	// checking topic existance for post instead of comment counting
 	if (!$row) {
 		// do not create topic for unapproved comment if not enabled
@@ -60,34 +60,34 @@ function afterpost($id)
 			return;
 		create_bb_topic($post);
 		continue_bb_topic($post, $comment);
-	} elseif (sync_that_status($comment->comment_ID))
+	} elseif (wpbb_sync_that_status($comment->comment_ID))
 	{
 		// continuing discussion on forum
 		continue_bb_topic($post, $comment);
 	}
 }
 
-function afteredit($id)
+function wpbb_afteredit($id)
 {
-	//error_log("wordpress: afteredit");
+	//error_log("wordpress: wpbb_afteredit");
 	if (!wpbb_do_sync())
 		return;
 	$comment = get_comment($id);
 	$post = get_post($comment->comment_post_ID);
-	if (!is_enabled_for_post($post->ID))
+	if (!wpbb_is_enabled_for_post($post->ID))
 		return; // sync disabled for that post
-	if (!do_ping_sync($comment))
+	if (!wpbb_do_ping_sync($comment))
 		return;
-	$row = get_table_item('wp_comment_id', $comment->comment_ID);
+	$row = wpbb_get_table_item('wp_comment_id', $comment->comment_ID);
 	if ($row)
 	{
 		// have it in database, must sync
 		edit_bb_post($post, $comment);
 	} else
 	{
-		if (!sync_that_status($comment->comment_ID))
+		if (!wpbb_sync_that_status($comment->comment_ID))
 			return;
-		$row = get_table_item('wp_post_id', $comment->comment_post_ID);
+		$row = wpbb_get_table_item('wp_post_id', $comment->comment_post_ID);
 		if (!$row)
 		{
 			// no topic for that post
@@ -102,27 +102,27 @@ function afteredit($id)
 	}
 }
 
-function afterdelete($id)
+function wpbb_afterdelete($id)
 {
-	//error_log('wordpress: afterdelete');
-	delete_table_item('wp_comment_id', $id);
+	//error_log('wordpress: wpbb_afterdelete');
+	wpbb_delete_table_item('wp_comment_id', $id);
 	$request = array(
 		'action' => 'delete_post',
 		'comment_id' => $id
 	);
-	$answer = send_command($request);
-	remove_action('wp_set_comment_status', 'afteredit');
+	$answer = send_bb_command($request);
+	remove_action('wp_set_comment_status', 'wpbb_afteredit');
 }
 
-function afterstatuschange($id)
+function wpbb_afterstatuschange($id)
 {
-	//error_log('wordpress: afterstatuschange');
+	//error_log('wordpress: wpbb_afterstatuschange');
 	if (!wpbb_do_sync())
 		return;
-	if (!is_enabled_for_post($id))
+	if (!wpbb_is_enabled_for_post($id))
 		return; // sync disabled for that post
 	$post = get_post($id);
-	$row = get_table_item('wp_post_id', $post->ID);
+	$row = wpbb_get_table_item('wp_post_id', $post->ID);
 	if (!$row)
 	{
 		return;
@@ -136,30 +136,30 @@ function afterstatuschange($id)
 	}
 }
 
-function afterpublish($id)
+function wpbb_afterpublish($id)
 {
-	// error_log('wordpress: afterpublish');
+	// error_log('wordpress: wpbb_afterpublish');
 	if (!wpbb_do_sync())
 		return;
-	if (!is_enabled_for_post($id))
+	if (!wpbb_is_enabled_for_post($id))
 		return; // sync disabled for that post
 	$post = get_post($id);
 	// so maybe? ;)
-	$row = get_table_item('wp_post_id', $post->ID);
+	$row = wpbb_get_table_item('wp_post_id', $post->ID);
 	if (!$row && get_option('wpbb_topic_after_posting') == 'enabled')
 	{
 		create_bb_topic($post);
 	}
 }
 
-function afterpostedit($id)
+function wpbb_afterpostedit($id)
 {
-	//error_log('wordpress: afterpostedit');
+	//error_log('wordpress: wpbb_afterpostedit');
 	if (!wpbb_do_sync())
 		return;
-	if (!is_enabled_for_post($id))
+	if (!wpbb_is_enabled_for_post($id))
 		return; // sync disabled for that post
-	$row = get_table_item('wp_post_id', $id);
+	$row = wpbb_get_table_item('wp_post_id', $id);
 	if ($row)
 	{
 		edit_bb_tags($id, $row['bb_topic_id']);
@@ -167,7 +167,7 @@ function afterpostedit($id)
 	}
 }
 
-function get_real_comment_status($id)
+function wpbb_get_real_comment_status($id)
 {
 	// FIXME: remove that shit! it must work original way fine. Really must? ;)
 	global $wpdb;
@@ -186,15 +186,15 @@ function wpbb_do_sync()
 	return true; // everything is ok ;)
 }
 
-function sync_that_status($id)
+function wpbb_sync_that_status($id)
 {
-	if (get_real_comment_status($id) == 1 || get_option('wpbb_sync_all_comments') == 'enabled')
+	if (wpbb_get_real_comment_status($id) == 1 || get_option('wpbb_sync_all_comments') == 'enabled')
 		return true;
 	else
 		return false;
 }
 
-function do_ping_sync(&$comment)
+function wpbb_do_ping_sync(&$comment)
 {
 	if ($comment->comment_type != '') // not a normal comment(pingback or trackback)
 	{
@@ -207,7 +207,7 @@ function do_ping_sync(&$comment)
 	return true;
 }
 
-function is_enabled_for_post($post_id)
+function wpbb_is_enabled_for_post($post_id)
 {
 	if (get_post_meta($post_id, 'wpbb_sync_comments', true) == 'yes')
 		return true; // sync enabled for that post
@@ -253,9 +253,9 @@ function create_bb_topic(&$post)
 		'comment_id' => 0,
 		'comment_approved' => 1
 	);
-	$answer = send_command($request);
+	$answer = send_bb_command($request);
 	$data = unserialize($answer);
-	return add_table_item($post->ID, 0, $data['topic_id'], $data['post_id']);
+	return wpbb_add_table_item($post->ID, 0, $data['topic_id'], $data['post_id']);
 }
 
 function continue_bb_topic(&$post, &$comment)
@@ -269,11 +269,11 @@ function continue_bb_topic(&$post, &$comment)
 		'comment_author' => $comment->comment_author,
 		'comment_author_email' => $comment->comment_author_email,
 		'comment_author_url' => $comment->comment_author_url,
-		'comment_approved' => get_real_comment_status($comment->comment_ID)
+		'comment_approved' => wpbb_get_real_comment_status($comment->comment_ID)
 	);
-	$answer = send_command($request);
+	$answer = send_bb_command($request);
 	$data = unserialize($answer);
-	add_table_item($post->ID, $comment->comment_ID, $data['topic_id'], $data['post_id']);
+	wpbb_add_table_item($post->ID, $comment->comment_ID, $data['topic_id'], $data['post_id']);
 }
 
 function edit_bb_post(&$post, &$comment)
@@ -287,9 +287,9 @@ function edit_bb_post(&$post, &$comment)
 		'comment_author' => $comment->comment_author,
 		'comment_author_email' => $comment->comment_author_email,
 		'comment_author_url' => $comment->comment_author_url,
-		'comment_approved' => get_real_comment_status($comment->comment_ID)
+		'comment_approved' => wpbb_get_real_comment_status($comment->comment_ID)
 	);
-	send_command($request);
+	send_bb_command($request);
 }
 
 function edit_bb_first_post($post_id)
@@ -307,7 +307,7 @@ function edit_bb_first_post($post_id)
 		'user' => $comment->user_id,
 		'comment_approved' => 1 // approved
 	);
-	send_command($request);
+	send_bb_command($request);
 }
 
 function close_bb_topic($topic)
@@ -316,7 +316,7 @@ function close_bb_topic($topic)
 		'action' => 'close_bb_topic',
 		'topic_id' => $topic,
 	);
-	send_command($request);
+	send_bb_command($request);
 }
 
 function open_bb_topic($topic)
@@ -325,12 +325,12 @@ function open_bb_topic($topic)
 		'action' => 'open_bb_topic',
 		'topic_id' => $topic,
 	);
-	send_command($request);
+	send_bb_command($request);
 }
 
 function check_bb_settings()
 {
-	$answer = send_command(array('action' => 'check_bb_settings'));
+	$answer = send_bb_command(array('action' => 'check_bb_settings'));
 	$data = unserialize($answer);
 	return $data;
 }
@@ -342,7 +342,7 @@ function set_bb_plugin_status($status)
 		'action' => 'set_bb_plugin_status',
 		'status' => $status,
 	);
-	$answer = send_command($request);
+	$answer = send_bb_command($request);
 	$data = unserialize($answer);
 	return $data;
 }
@@ -359,7 +359,7 @@ function edit_bb_tags($wp_post, $bb_topic)
 		'topic' => $bb_topic,
 		'tags' => implode(', ', $tags)
 	);
-	send_command($request);
+	send_bb_command($request);
 }
 
 function get_bb_topic_first_post($post_id)
@@ -375,7 +375,7 @@ function get_bb_topic_first_post($post_id)
 function edit_wp_comment()
 {
 	$comment = get_comment($id);
-	if (!is_enabled_for_post($comment->comment_post_ID))
+	if (!wpbb_is_enabled_for_post($comment->comment_post_ID))
 		return; // sync disabled for that post
 	$new_info = array(
 		'comment_ID' => $_POST['comment_id'],
@@ -391,7 +391,7 @@ function add_wp_comment()
 	// NOTE: wordpress have something very strange with users
 	// everyone cant have an registered id and different display_name
 	// and other info for posts. strange? i think so ;)
-	if (!is_enabled_for_post($_POST['wp_post_id']))
+	if (!wpbb_is_enabled_for_post($_POST['wp_post_id']))
 		return; // sync disabled for that post
 	global $current_user;
 	get_currentuserinfo();
@@ -406,14 +406,14 @@ function add_wp_comment()
 	);
 	$comment_id = wp_insert_comment($info);
 	wp_set_comment_status($comment_id, status_bb2wp($_POST['post_status']));
-	add_table_item($_POST['wp_post_id'], $comment_id, $_POST['topic_id'], $_POST['post_id']);
+	wpbb_add_table_item($_POST['wp_post_id'], $comment_id, $_POST['topic_id'], $_POST['post_id']);
 	$data = serialize(array('comment_id' => $comment_id));
 	echo $data;
 }
 
 function close_wp_comments()
 {
-	if (!is_enabled_for_post($_POST['post_id']))
+	if (!wpbb_is_enabled_for_post($_POST['post_id']))
 		return; // sync disabled for that post
 	global $wpdb;
 	$wpdb->query('UPDATE '.$wpdb->prefix.'posts SET comment_status = \'closed\' WHERE ID = '.$_POST['post_id']);
@@ -421,7 +421,7 @@ function close_wp_comments()
 
 function open_wp_comments()
 {
-	if (!is_enabled_for_post($_POST['post_id']))
+	if (!wpbb_is_enabled_for_post($_POST['post_id']))
 		return; // sync disabled for that post
 	global $wpdb;
 	$wpdb->query('UPDATE '.$wpdb->prefix.'posts SET comment_status = \'open\' WHERE ID = '.$_POST['post_id']);
@@ -445,9 +445,9 @@ function set_wp_plugin_status()
 
 function check_wp_settings()
 {
-	if (!test_pair())
+	if (!wpbb_test_pair())
 		return 1; // cannot establish connection to bb
-	if (!secret_key_equal())
+	if (!wpbb_secret_key_equal())
 		return 2; // secret keys are not equal
 	if (!correct_bbwp_version())
 		return 3; // too old bbPress part version
@@ -473,7 +473,7 @@ function edit_wp_tags()
 
 // ===== end of wp functions =====
 
-function send_command($pairs)
+function send_bb_command($pairs)
 {
 	$url = get_option('wpbb_bbpress_url').'my-plugins/wordpress-bbpress-syncronization/bbwp-sync.php';
 	preg_match('@https?://([\-_\w\.]+)+(:(\d+))?/(.*)@', $url, $matches);
@@ -536,28 +536,28 @@ function send_command($pairs)
 	}
 }
 
-function test_pair()
+function wpbb_test_pair()
 {
-	$answer = send_command(array('action' => 'test'));
+	$answer = send_bb_command(array('action' => 'test'));
 	// return 1 if test passed, 0 otherwise
 	// TODO: check configuration!
 	$data = unserialize($answer);
 	return $data['test'] == 1 ? 1 : 0;
 }
 
-function secret_key_equal()
+function wpbb_secret_key_equal()
 {
-	$answer = send_command(array('action' => 'keytest', 'secret_key' => md5(get_option('wpbb_secret_key'))));
+	$answer = send_bb_command(array('action' => 'keytest', 'secret_key' => md5(get_option('wpbb_secret_key'))));
 	$data = unserialize($answer);
 	return $data['keytest'];
 }
 
-function compare_keys_local()
+function wpbb_compare_keys_local()
 {
 	return $_POST['secret_key'] == md5(get_option('wpbb_secret_key')) ? 1 : 0;
 }
 
-function set_global_plugin_status($status)
+function wpbb_set_global_plugin_status($status)
 {
 	// FIXME: fix something here.
 	$bb_settings = check_bb_settings();
@@ -617,7 +617,7 @@ function wpbb_listener()
 {
 	if (empty($_POST['action']))
 	{
-		echo 'If you see that, plugin must connect well. bbPress test response (must be a:1:{s:4:"test";i:1;}): '.send_command(array('action' => 'test'));
+		echo 'If you see that, plugin must connect well. bbPress test response (must be a:1:{s:4:"test";i:1;}): '.send_bb_command(array('action' => 'test'));
 		exit;
 	}
 	set_current_user($_POST['user']);
@@ -628,11 +628,11 @@ function wpbb_listener()
 		exit;
 	} elseif ($_POST['action'] == 'keytest')
 	{
-		echo serialize(array('keytest' => compare_keys_local()));
+		echo serialize(array('keytest' => wpbb_compare_keys_local()));
 		exit;
 	}
 	// here we need secret key, only if not checking settings
-	if (!secret_key_equal() && $_POST['action'] != 'check_wp_settings')
+	if (!wpbb_secret_key_equal() && $_POST['action'] != 'check_wp_settings')
 	{
 		// go away, damn cheater!
 		exit;
@@ -721,20 +721,26 @@ function wpbb_install()
 	// next options must be cheched by another conditions!
 }
 
-function add_table_item($wp_post, $wp_comment, $bb_topic, $bb_post)
+function deactivate_wpbb()
+{
+	// deactivate on disabling
+	wpbb_set_global_plugin_status('disabled');
+}
+
+function wpbb_add_table_item($wp_post, $wp_comment, $bb_topic, $bb_post)
 {
 	global $wpdb;
 	return $wpdb->query('INSERT INTO '.$wpdb->prefix."wpbb_ids (wp_post_id, wp_comment_id, bb_topic_id, bb_post_id)
 		VALUES ($wp_post, $wp_comment, $bb_topic, $bb_post)");
 }
 
-function get_table_item($field, $value)
+function wpbb_get_table_item($field, $value)
 {
 	global $wpdb;
 	return $wpdb->get_row('SELECT * FROM '.$wpdb->prefix."wpbb_ids WHERE $field = $value LIMIT 1", ARRAY_A);
 }
 
-function delete_table_item($field, $value)
+function wpbb_delete_table_item($field, $value)
 {
 	global $wpdb;
 	$wpdb->query('DELETE FROM '.$wpdb->prefix."wpbb_ids WHERE $field = $value");
@@ -751,7 +757,7 @@ function status_bb2wp($status)
 		return 'spam'; // spam
 }
 
-function options_page()
+function wpbb_options_page()
 {
 	if (function_exists('add_submenu_page'))
 	{
@@ -768,7 +774,7 @@ function wpbb_config() {
 		update_option('wpbb_secret_key', $_POST['secret_key']);
 		update_option('wpbb_comments_to_show', (int) $_POST['comments_to_show'] >= -1 ? (int) $_POST['comments_to_show'] : -1);
 		update_option('wpbb_max_comments_with_form', (int) $_POST['max_comments_with_form'] >= -1 ? (int) $_POST['max_comments_with_form'] : -1);
-		set_global_plugin_status($_POST['plugin_status'] == 'on' ? 'enabled' : 'disabled');
+		wpbb_set_global_plugin_status($_POST['plugin_status'] == 'on' ? 'enabled' : 'disabled');
 		update_option('wpbb_quote_first_post', $_POST['enable_quoting'] == 'on' ? 'enabled' : 'disabled');
 		update_option('wpbb_sync_by_default', $_POST['sync_by_default'] == 'on' ? 'enabled' : 'disabled');
 		update_option('wpbb_sync_all_comments', $_POST['sync_all_comments'] == 'on' ? 'enabled' : 'disabled');
@@ -782,6 +788,7 @@ function wpbb_config() {
 ?>
 <div class="wrap">
 	<h2><?php _e('bbPress syncronization', 'wpbb-sync'); ?></h2>
+	<div style="vert-align:center;margin:4px">Please donate if you like this plugin: <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=ibobrik%40gmail%2ecom&lc=US&item_name=WordPress%2dbbPress%20syncronization%20plugin&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHostedGuest"><img src="https://www.paypal.com/en_US/i/btn/btn_donate_LG.gif" alt="Donate!" /></a></div>
 	<form name="form1" method="post" action="">
 	<input type="hidden" name="stage" value="process" />
 	<table width="100%" cellspacing="2" cellpadding="5" class="form-table">
@@ -791,12 +798,12 @@ function wpbb_config() {
 				<input type="text" name="bbpress_url" value="<?php echo get_option('wpbb_bbpress_url'); ?>" />
 				<?php
 				$err = check_wp_settings(); // only one error at once, let's show other if only previvous was fixed
-				if (!get_option('wpbb_bbpress_url') && test_pair())
+				if (!get_option('wpbb_bbpress_url') && wpbb_test_pair())
 				{
 					_e('bbPress url (we\'ll add <em>my-plugins/wordpress-bbpress-syncronization/bbwp-sync.php</em> to your url)', 'wpbb-sync');
 				} else
 				{
-					if (test_pair())
+					if (wpbb_test_pair())
 					{
 						_e('Everything is ok!', 'wpbb-sync');
 					} else
@@ -819,7 +826,7 @@ function wpbb_config() {
 					_e('We need it for secure communication between your systems', 'wpbb-sync');
 				} else
 				{
-					if (secret_key_equal())
+					if (wpbb_secret_key_equal())
 					{
 						_e('Everything is ok!', 'wpbb-sync');
 					} else
@@ -900,7 +907,7 @@ function wpbb_config() {
 		</tr>
 		<tr valign="baseline">
 			<th scope="row" style="font-weight:bold"><?php _e('Enable plugin', 'wpbb-sync'); ?></th>
-			<td><?php $check = check_wpbb_settings(); if ($check['code'] != 0) set_global_plugin_status('disabled'); ?>
+			<td><?php $check = check_wpbb_settings(); if ($check['code'] != 0) wpbb_set_global_plugin_status('disabled'); ?>
 				<input type="checkbox" name="plugin_status"<?php echo (get_option('wpbb_plugin_status') == 'enabled') ? ' checked="checked"' : ''; echo ($check['code'] == 0) ? '' : ' disabled="disabled"'; ?> /> (<?php echo ($check['code'] == 0) ? __('Allowed by both parts', 'wpbb-sync') : __('Not allowed: ', 'wpbb-sync').$check['message'] ?>)
 			</td>
 		</tr>
@@ -911,12 +918,6 @@ function wpbb_config() {
 	</form>
 </div>
 <?php
-}
-
-function deactivate_wpbb()
-{
-	// deactivate on disabling
-	set_global_plugin_status('disabled');
 }
 
 function wpbb_post_options()
@@ -953,7 +954,7 @@ function wpbb_comments_array_count($comments)
 	global $post;
 	if (get_option('wpbb_plugin_status') != 'enabled')
 		return $comments; // plugin disabled
-	if (!is_enabled_for_post($post->ID))
+	if (!wpbb_is_enabled_for_post($post->ID))
 		return $comments;
 	$maxform = get_option('wpbb_max_comments_with_form');
 	global $post;
@@ -964,11 +965,11 @@ function wpbb_comments_array_count($comments)
 	$max = get_option('wpbb_comments_to_show');
 	if (get_option('wpbb_point_to_forum') == 'enabled' && $max != 0)
 	{
-		$row = get_table_item('wp_post_id', $post->ID);
+		$row = wpbb_get_table_item('wp_post_id', $post->ID);
 		if ($row)
 		{
 			$topic_id = $row['bb_topic_id'];
-			$answer = unserialize(send_command(array('action' => 'get_topic_link', 'topic_id' => $topic_id)));
+			$answer = unserialize(send_bb_command(array('action' => 'get_topic_link', 'topic_id' => $topic_id)));
 			$link = $answer['link'];
 		}
 		// FIXME: dirty hack to get last array element
@@ -989,7 +990,7 @@ function wpbb_comments_array_count($comments)
 
 function correct_bbwp_version()
 {
-	$answer = unserialize(send_command(array('action' => 'get_bbwp_version')));
+	$answer = unserialize(send_bb_command(array('action' => 'get_bbwp_version')));
 	global $min_version;
 	return ($answer['version'] < $min_version) ? 0 : 1;
 }
@@ -1010,7 +1011,7 @@ function wpbb_forum_thread_exists()
 	if (get_option('wpbb_plugin_status') != 'enabled')
 		return false; // plugin disabled
 	global $post;
-	$row = get_table_item('wp_post_id', $post->ID);
+	$row = wpbb_get_table_item('wp_post_id', $post->ID);
 	if ($row)
 		return true;
 	else
@@ -1020,8 +1021,8 @@ function wpbb_forum_thread_exists()
 function wpbb_forum_thread_url()
 {
 	global $post;
-	$row = get_table_item('wp_post_id', $post->ID);
-	$answer = unserialize(send_command(array('action' => 'get_topic_link', 'topic_id' => $row['bb_topic_id'])));
+	$row = wpbb_get_table_item('wp_post_id', $post->ID);
+	$answer = unserialize(send_bb_command(array('action' => 'get_topic_link', 'topic_id' => $row['bb_topic_id'])));
 	return $answer['link'];
 }
 
@@ -1031,24 +1032,31 @@ function wpbb_footer()
 		echo '<p style="text-align:center;">[ bbPress <a href="http://bobrik.name/code/wordpress/wordpress-bbpress-syncronization/">synchronization</a> by <a href="http://bobrik.name/cv">bobrik</a> ]</p>';
 }
 
+function wpbb_warning()
+{
+	if (get_option('wpbb_plugin_status') != 'enabled' && !isset($_POST['submit']))
+		echo '<div class="updated fade"><p><strong>'.__('Syncrinization with bbPress is not enabled.').'</strong> '.sprintf(__('You must <a href="%1$s">check options and enable plugin</a> to make it working.'), 'plugins.php?page=wpbb-config').'</p></div>';
+}
+
 
 add_action('init', 'wpbb_add_textdomain');
-add_action('deactivate_wordpress-bbpress-syncronization/wpbb-sync.php', 'deactivate_wpbb');
-add_action('comment_post', 'afterpost');
-add_action('edit_comment', 'afteredit');
-add_action('delete_comment', 'afterdelete');
-add_action('wp_set_comment_status', 'afteredit');
-add_action('edit_post', 'afterpostedit');
-add_action('edit_post', 'afterstatuschange');
-add_action('wp_set_comment_status', 'afteredit');
-add_action('admin_menu', 'options_page');
-register_activation_hook('wordpress-bbpress-syncronization/wpbb-sync.php', 'wpbb_install');
+register_deactivation_hook(__FILE__, 'deactivate_wpbb');
+register_activation_hook(__FILE__, 'wpbb_install');
+add_action('comment_post', 'wpbb_afterpost');
+add_action('edit_comment', 'wpbb_afteredit');
+add_action('delete_comment', 'wpbb_afterdelete');
+add_action('wp_set_comment_status', 'wpbb_afteredit');
+add_action('edit_post', 'wpbb_afterpostedit');
+add_action('edit_post', 'wpbb_afterstatuschange');
+add_action('wp_set_comment_status', 'wpbb_afteredit');
+add_action('admin_menu', 'wpbb_options_page');
 add_action('edit_form_advanced', 'wpbb_post_options');
 add_action('draft_post', 'wpbb_store_post_options');
 add_action('publish_post', 'wpbb_store_post_options');
 add_action('save_post', 'wpbb_store_post_options');
-add_action('publish_post', 'afterpublish');
+add_action('publish_post', 'wpbb_afterpublish');
 add_filter('comments_array', 'wpbb_comments_array_count');
+add_action('admin_notices', 'wpbb_warning');
 add_action('wp_footer', 'wpbb_footer');
 
 ?>
