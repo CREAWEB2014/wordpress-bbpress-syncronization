@@ -149,7 +149,7 @@ msgstr "Ссылаться на форум в последнем коммент�
 #: wpbb-sync.php:882
 msgid ""
 "If enabled, last comment will have link to forum discussion. Don't set "
-"previvous option to 0 to use that. It is better to use template functions"
+"previous option to 0 to use that. It is better to use template functions"
 msgstr ""
 "Если включено, последний комментарий будет иметь ссылку на дискуссию на "
 "форуме. Не устанавливайте предыдущую опцию в 0 для использования этого. "
@@ -201,5 +201,5 @@ msgid "Syncronize post comments with bbPress?"
 msgstr "Синхронизировать комментарии с bbPress?"
 
 #: wpbb-sync.php:976
-msgid "Please continue disussion on the forum: "
+msgid "Please continue discussion on the forum: "
 msgstr "Продолжение дискуссии на форуме: "

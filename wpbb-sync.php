@@ -3,7 +3,7 @@
 Plugin Name: WordPress-bbPress syncronization
 Plugin URI: http://bobrik.name/code/wordpress/wordpress-bbpress-syncronization/
 Description: Sync your WordPress comments to bbPress forum and back.
-Version: 0.7.7
+Version: 0.7.8
 Author: Ivan Babrou <ibobrik@gmail.com>
 Author URI: http://bobrik.name/
 
@@ -26,8 +26,8 @@ Boston, MA 02111-1307, USA.
 */
 
 // for version checking
-$wpbb_version = 77;
-$min_version = 60;
+$wpbb_version = 78;
+$min_version = 78;
 
 // for mode checking
 $wpbb_plugin = 0;
@@ -241,6 +241,11 @@ function create_bb_topic(&$post)
 	{
 		$tags[] = $tag->name;
 	}
+	$categories = array();
+	foreach (get_the_category($post->ID) as $cat)
+	{
+		$categories[] = $cat->term_id;
+	}
 	$post_content = bb_first_post_text($post);
 	$post_content .= '<br/><a href="'.get_permalink($post->ID).'">'.$post->post_title.'</a>';
 	$request = array(
@@ -249,6 +254,7 @@ function create_bb_topic(&$post)
 		'post_content' => wpbb_correct_links(apply_filters('the_content', $post_content)),
 		'user' => $post->post_author,
 		'tags' => implode(', ', $tags),
+		'categories' => serialize($categories),
 		'post_id' => $post->ID,
 		'comment_id' => 0,
 		'comment_approved' => 1
@@ -371,6 +377,14 @@ function get_bb_topic_first_post($post_id)
 // ===== end of bb functions =====
 
 // ===== start of wp functions =====
+
+function wpbb_get_categories()
+{
+	$categories = array();
+	foreach (get_categories(array('hide_empty' => false)) as $cat)
+		$categories[$cat->term_id] = $cat->cat_name;
+	echo serialize($categories);
+}
 
 function edit_wp_comment()
 {
@@ -495,6 +509,7 @@ function send_bb_command($pairs)
 			$pairs['user'] = 0;
 		}
 	}
+	$answer = '';
 	if (substr($url, 0, 5) == 'https')
 	{
 		// must use php-curl to work with https
@@ -505,7 +520,6 @@ function send_bb_command($pairs)
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
 		$answer = curl_exec($ch);
 		curl_close($ch);
-		return $answer;
 	} else
 	{
 		$port = $matches[3] ? $matches[3] : 80;
@@ -532,8 +546,10 @@ function send_bb_command($pairs)
 			fclose($fs);
 			$response = explode("\r\n\r\n", $response, 2);
 		}
-		return $response[1];
+		$answer = $response[1];
 	}
+	// f*cking windows dirty hacks. hate you, dumb idiots from micro$oft!
+	return trim(trim($answer, "\xEF\xBB\xBF"));
 }
 
 function wpbb_test_pair()
@@ -648,6 +664,9 @@ function wpbb_listener()
 	{
 		global $wpbb_version;
 		echo serialize(array('version' => $wpbb_version));
+	} elseif ($_POST['action'] == 'get_categories')
+	{
+		wpbb_get_categories();
 	}
 	// we need enabled plugins for next actions
 	if (get_option('wpbb_plugin_status') != 'enabled')
@@ -797,7 +816,7 @@ function wpbb_config() {
 			<td>
 				<input type="text" name="bbpress_url" value="<?php echo get_option('wpbb_bbpress_url'); ?>" />
 				<?php
-				$err = check_wp_settings(); // only one error at once, let's show other if only previvous was fixed
+				$err = check_wp_settings(); // only one error at once, let's show other if only previous was fixed
 				if (!get_option('wpbb_bbpress_url') && wpbb_test_pair())
 				{
 					_e('bbPress url (we\'ll add <em>my-plugins/wordpress-bbpress-syncronization/bbwp-sync.php</em> to your url)', 'wpbb-sync');
@@ -886,7 +905,7 @@ function wpbb_config() {
 		<tr valign="baseline">
 			<th scope="row"><?php _e('Point to forum in latest comment', 'wpbb-sync'); ?></th>
 			<td>
-				<input type="checkbox" name="point_to_forum"<?php echo (get_option('wpbb_point_to_forum') == 'enabled') ? ' checked="checked"' : ''; ?> /> (<?php _e('If enabled, last comment will have link to forum discussion. Don\'t set previvous option to 0 to use that. It is better to use template functions', 'wpbb-sync'); ?>)
+				<input type="checkbox" name="point_to_forum"<?php echo (get_option('wpbb_point_to_forum') == 'enabled') ? ' checked="checked"' : ''; ?> /> (<?php _e('If enabled, last comment will have link to forum discussion. Don\'t set previous option to 0 to use that. It is better to use template functions', 'wpbb-sync'); ?>)
 			</td>
 		</tr>
 		<tr valign="baseline">
@@ -974,7 +993,7 @@ function wpbb_comments_array_count($comments)
 		}
 		// FIXME: dirty hack to get last array element
 		$comments[count($comments)-1]->comment_content .= '<br/><p class="wpbb_continue_discussion">'.
-			__('Please continue disussion on the forum: ', 'wpbb-sync')."<a href='$link'> link</a></p>";
+			__('Please continue discussion on the forum: ', 'wpbb-sync')."<a href='$link'> link</a></p>";
 	}
 	if ($max == -1)
 		return $comments;
@@ -1034,8 +1053,8 @@ function wpbb_footer()
 
 function wpbb_warning()
 {
-	if (get_option('wpbb_plugin_status') != 'enabled' && !isset($_POST['submit']))
-		echo '<div class="updated fade"><p><strong>'.__('Syncrinization with bbPress is not enabled.').'</strong> '.sprintf(__('You must <a href="%1$s">check options and enable plugin</a> to make it working.'), 'plugins.php?page=wpbb-config').'</p></div>';
+	if (get_option('wpbb_plugin_status') != 'enabled' && !isset($_POST['Submit']))
+		echo '<div class="updated fade"><p><strong>'.__('Synchronization with bbPress is not enabled.').'</strong> '.sprintf(__('You must <a href="%1$s">check options and enable plugin</a> to make it work.'), 'plugins.php?page=wpbb-config').'</p></div>';
 }
 
 

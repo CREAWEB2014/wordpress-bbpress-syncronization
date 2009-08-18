@@ -56,6 +56,14 @@ Made for news.vitebsk.cc
 
 == Changelog ==
 
+Version 0.7.8 (xx.yy.zzzz)
+
+*  Spelling errors fixes
+*  Windows path fix, again and again
+*  Minor usability fixes
+*  Fixed "Incorrect URL" trouble for (hope) many installations
+*  Fixed EB BB BF unicode problem for some installations
+
 Version 0.7.7 (05.08.2009)
 
 *  More accurate path checking, must fix windows path problems

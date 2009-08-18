@@ -140,7 +140,7 @@ msgstr ""
 #: wpbb-sync.php:882
 msgid ""
 "If enabled, last comment will have link to forum discussion. Don't set "
-"previvous option to 0 to use that. It is better to use template functions"
+"previous option to 0 to use that. It is better to use template functions"
 msgstr ""
 
 #: wpbb-sync.php:886
@@ -188,5 +188,5 @@ msgid "Syncronize post comments with bbPress?"
 msgstr ""
 
 #: wpbb-sync.php:976
-msgid "Please continue disussion on the forum: "
+msgid "Please continue discussion on the forum: "
 msgstr ""
