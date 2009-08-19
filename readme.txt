@@ -63,6 +63,10 @@ Version 0.7.8 (xx.yy.zzzz)
 *  Minor usability fixes
 *  Fixed "Incorrect URL" trouble for (hope) many installations
 *  Fixed EB BB BF unicode problem for some installations
+*  Fixed incorrect html attributes handling in some cases
+*  Options page performance tweaks, twice faster for bbPress now
+*  Ability to tag crossposted topics in bbPress
+*  Setting additional meta information for synchronizing data
 
 Version 0.7.7 (05.08.2009)
 

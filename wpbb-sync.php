@@ -487,8 +487,20 @@ function edit_wp_tags()
 
 // ===== end of wp functions =====
 
+// action => answer
+// for actions that only return data and don't change their arguments
+$wpbb_cachable_requests = array(
+	'test' => '',
+	'keytest' => '',
+	'get_wpbb_version' => '',
+	'check_bb_settings' => ''
+);
+
 function send_bb_command($pairs)
 {
+	global $wpbb_cachable_requests;
+	if (isset($wpbb_cachable_requests[$pairs['action']]) && !empty($wpbb_cachable_requests[$pairs['action']]))
+		return $wpbb_cachable_requests[$pairs['action']];
 	$url = get_option('wpbb_bbpress_url').'my-plugins/wordpress-bbpress-syncronization/bbwp-sync.php';
 	preg_match('@https?://([\-_\w\.]+)+(:(\d+))?/(.*)@', $url, $matches);
 	if (!$matches)
@@ -549,7 +561,9 @@ function send_bb_command($pairs)
 		$answer = $response[1];
 	}
 	// f*cking windows dirty hacks. hate you, dumb idiots from micro$oft!
-	return trim(trim($answer, "\xEF\xBB\xBF"));
+	$answer = trim(trim($answer, "\xEF\xBB\xBF"));
+	$wpbb_cachable_requests[$pairs['action']] = $answer;
+	return $answer;
 }
 
 function wpbb_test_pair()
@@ -637,7 +651,7 @@ function wpbb_listener()
 		exit;
 	}
 	set_current_user($_POST['user']);
-	//error_log("GOT COMMAND for WordPress part: ".$_POST['action']);
+	// error_log("GOT COMMAND for WordPress part: ".$_POST['action']);
 	if ($_POST['action'] == 'test')
 	{
 		echo serialize(array('test' => 1));
