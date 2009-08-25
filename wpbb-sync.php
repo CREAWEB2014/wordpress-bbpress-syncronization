@@ -703,6 +703,9 @@ function wpbb_listener()
 	} elseif ($_POST['action'] == 'edit_wp_tags')
 	{
 		edit_wp_tags();
+	} elseif ($_POST['action'] == 'get_post_link')
+	{
+		wpbb_post_link();
 	}
 	exit;
 }
@@ -1061,6 +1064,11 @@ function wpbb_forum_thread_url()
 	$row = wpbb_get_table_item('wp_post_id', $post->ID);
 	$answer = unserialize(send_bb_command(array('action' => 'get_topic_link', 'topic_id' => $row['bb_topic_id'])));
 	return $answer['link'];
+}
+
+function wpbb_post_link()
+{
+	echo serialize(array('link' => get_permalink($_POST['post_id'])));
 }
 
 function wpbb_footer()

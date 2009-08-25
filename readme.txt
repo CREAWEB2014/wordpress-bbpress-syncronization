@@ -67,6 +67,7 @@ Version 0.7.8 (xx.yy.zzzz)
 *  Options page performance tweaks, twice faster for bbPress now
 *  Ability to tag crossposted topics in bbPress
 *  Setting additional meta information for synchronizing data
+*  New function to get WordPress post URL on forum
 
 Version 0.7.7 (05.08.2009)
 
