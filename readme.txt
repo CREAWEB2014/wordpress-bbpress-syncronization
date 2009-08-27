@@ -68,6 +68,8 @@ Version 0.7.8 (xx.yy.zzzz)
 *  Ability to tag crossposted topics in bbPress
 *  Setting additional meta information for synchronizing data
 *  New function to get WordPress post URL on forum
+*  Fixed potential bug with incorrect post test on bb side due mysql sort
+*  Changed function names to resolve collisions with «deep» integration
 
 Version 0.7.7 (05.08.2009)
 
