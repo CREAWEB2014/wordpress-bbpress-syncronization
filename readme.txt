@@ -3,8 +3,8 @@ Contributors: bobrik
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=ibobrik@gmail.com&lc=US&item_name=WordPress%20-%20bbPress%20sync%20plugin&currency_code=USD&bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHostedGuest
 Tags: bbPress, post, comment, integration, forum, syncronization, sync, synchronization
 Requires at least: 2.6.0
-Tested up to: 2.8.2
-Stable tag: 0.7.7
+Tested up to: 2.8.4
+Stable tag: 0.8.0
 
 Sync your WordPress comments to bbPress forum and back.
 
@@ -12,7 +12,7 @@ Sync your WordPress comments to bbPress forum and back.
 
 **YOU NEED TO SET UP SAME PLUGIN FOR BBPRESS TOO!**
 
-**bbPress part may be downloaded [here](http://bbpress.org/plugins/topic/wordpress-bbpress-syncronization/page/3/)**
+**bbPress part may be downloaded [here](http://bbpress.org/plugins/topic/wordpress-bbpress-syncronization/)**
 
 When you post comment to WordPress it automatically mirroring in bbPress and back. See ChangeLog section to know about new hot features
 
@@ -45,6 +45,8 @@ FEATURES:
 *   Automatic redirection of relative links in posts/comments
 *   Translations: English, Russian, Belarusian, you may do your own
 *   WP template functions: wpbb_forum_thread_exists, wpbb_forum_thread_url (returns string)
+*   Adding tag for crossposted forum topics to process them on bbPress side
+*   Crossposting to specified forum according post category
 
 YOU MAY HELP:
 
@@ -56,7 +58,7 @@ Made for news.vitebsk.cc
 
 == Changelog ==
 
-Version 0.7.8 (xx.yy.zzzz)
+Version 0.8.0 (20.09.2009)
 
 *  Spelling errors fixes
 *  Windows path fix, again and again
@@ -70,6 +72,7 @@ Version 0.7.8 (xx.yy.zzzz)
 *  New function to get WordPress post URL on forum
 *  Fixed potential bug with incorrect post test on bb side due mysql sort
 *  Changed function names to resolve collisions with «deep» integration
+*  Crossposting to specified forum according post category
 
 Version 0.7.7 (05.08.2009)
 

@@ -3,7 +3,7 @@
 Plugin Name: WordPress-bbPress syncronization
 Plugin URI: http://bobrik.name/code/wordpress/wordpress-bbpress-syncronization/
 Description: Sync your WordPress comments to bbPress forum and back.
-Version: 0.7.8
+Version: 0.8.0
 Author: Ivan Babrou <ibobrik@gmail.com>
 Author URI: http://bobrik.name/
 
@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.
 */
 
 // for version checking
-$wpbb_version = 78;
+$wpbb_version = 80;
 $min_version = 78;
 
 // for mode checking
@@ -630,6 +630,12 @@ function wpbb_check_settings()
 	return $data;
 }
 
+function wpbb_is_deep_integrated()
+{
+	// do we have another plugin part included?
+	return function_exists('bbwp_listener');
+}
+
 if (isset($_REQUEST['wpbb-listener']))
 {
 	// define redirection if request have wpbb-listener key
@@ -823,7 +829,7 @@ function wpbb_config()
 ?>
 <div class="wrap">
 	<h2><?php _e('bbPress syncronization', 'wpbb-sync'); ?></h2>
-	<div style="vert-align:center;margin:4px">Please donate if you like this plugin: <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=ibobrik%40gmail%2ecom&lc=US&item_name=WordPress%2dbbPress%20syncronization%20plugin&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHostedGuest"><img src="https://www.paypal.com/en_US/i/btn/btn_donate_LG.gif" alt="Donate!" /></a></div>
+	<div style="padding:10px;border-bottom:1px dotted #aaa"><span style="margin:10px auto;font-weight:bold;">Please <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=ibobrik%40gmail%2ecom&lc=US&item_name=WordPress%2dbbPress%20syncronization%20plugin&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHostedGuest">donate</a> if you like this plugin, or at least <a href="http://bobrik.name/code/wordpress/wordpress-bbpress-syncronization/">give feedback</a>, it's important to developers.</span> <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=ibobrik%40gmail%2ecom&lc=US&item_name=WordPress%2dbbPress%20syncronization%20plugin&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHostedGuest" style="float:right;"><img src="https://www.paypal.com/en_US/i/btn/btn_donate_LG.gif" alt="Donate!" /></a></div>
 	<form name="form1" method="post" action="">
 	<input type="hidden" name="stage" value="process" />
 	<table width="100%" cellspacing="2" cellpadding="5" class="form-table">
@@ -1079,7 +1085,7 @@ function wpbb_footer()
 function wpbb_warning()
 {
 	if (get_option('wpbb_plugin_status') != 'enabled' && !isset($_POST['Submit']))
-		echo '<div class="updated fade"><p><strong>'.__('Synchronization with bbPress is not enabled.').'</strong> '.sprintf(__('You must <a href="%1$s">check options and enable plugin</a> to make it work.'), 'plugins.php?page=wpbb-config').'</p></div>';
+		echo '<div class="updated fade"><p><strong>'.__('Synchronization with bbPress is not enabled.', 'wpbb-sync').'</strong> '.sprintf(__('You must <a href="%1$s">check options and enable plugin</a> to make it work.', 'wpbb-sync'), 'plugins.php?page=wpbb-config').'</p></div>';
 }
 
 

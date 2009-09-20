@@ -16,31 +16,31 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Lokalize 1.0\n"
 
-#: wpbb-sync.php:460 wpbb-sync.php:600 wpbb-sync.php:801 wpbb-sync.php:824
+#: wpbb-sync.php:475 wpbb-sync.php:628 wpbb-sync.php:849 wpbb-sync.php:872
 msgid "Everything is ok!"
 msgstr "Всё в порядке!"
 
-#: wpbb-sync.php:462
+#: wpbb-sync.php:477
 msgid "Cannot establish connection to bbPress part"
 msgstr "Невозможно установить соединение с bbPress составляющей"
 
-#: wpbb-sync.php:464
+#: wpbb-sync.php:479
 msgid "Invalid secret key"
 msgstr "Неверный секретный ключ"
 
-#: wpbb-sync.php:466
+#: wpbb-sync.php:481
 msgid "Too old bbPress part plugin version"
 msgstr "Слишком старая версия bbPress составляющей"
 
-#: wpbb-sync.php:758 wpbb-sync.php:784 wpbb-sync.php:925
+#: wpbb-sync.php:804 wpbb-sync.php:831 wpbb-sync.php:967
 msgid "bbPress syncronization"
 msgstr "Синхронизация с bbPress"
 
-#: wpbb-sync.php:789
+#: wpbb-sync.php:837
 msgid "bbPress url"
 msgstr "Адрес bbPress"
 
-#: wpbb-sync.php:796
+#: wpbb-sync.php:844
 msgid ""
 "bbPress url (we'll add <em>my-plugins/wordpress-bbpress-syncronization/bbwp-"
 "sync.php</em> to your url)"
@@ -48,56 +48,56 @@ msgstr ""
 "Адрес bbPress (мы автоматически добавим <em>my-plugins/wordpress-bbpress-"
 "syncronization/bbwp-sync.php</em> в его конец)"
 
-#: wpbb-sync.php:804
+#: wpbb-sync.php:852
 msgid "URL is incorrect or connection error, please verify it (full variant): "
 msgstr ""
 "Адрес неверен или ошибка соединения, проверьте адрес (полный вариант): "
 
-#: wpbb-sync.php:813
+#: wpbb-sync.php:861
 msgid "Secret key"
 msgstr "Секретный ключ"
 
-#: wpbb-sync.php:819
+#: wpbb-sync.php:867
 msgid "We need it for secure communication between your systems"
 msgstr "Ключ необходим для безопасной связи между частями системы"
 
-#: wpbb-sync.php:827
+#: wpbb-sync.php:875
 msgid "Error! Not equal secret keys in WordPress and bbPress"
 msgstr "Ошибка! Различные секретные ключи в WordPress и bbPress"
 
-#: wpbb-sync.php:834
+#: wpbb-sync.php:882
 msgid "Sync comments by default"
 msgstr "Синхронизировать комментарии по умолчанию"
 
-#: wpbb-sync.php:836
+#: wpbb-sync.php:884
 msgid "Also will be used for posts without any sync option value"
 msgstr ""
 "Также будет использоваться для постов без установленной опции синхронизации"
 
-#: wpbb-sync.php:840
+#: wpbb-sync.php:888
 msgid "Create topic on posting"
 msgstr "Создавать тему в форуме при публикации"
 
-#: wpbb-sync.php:842
+#: wpbb-sync.php:890
 msgid "Will create topic in bbPress after WordPress post publishing"
 msgstr "Будет создавать тему в bbPress после публикации в WordPress"
 
-#: wpbb-sync.php:846
+#: wpbb-sync.php:894
 msgid "Sync all comments"
 msgstr "Синхронизировать все комментарии"
 
-#: wpbb-sync.php:848
+#: wpbb-sync.php:896
 msgid ""
 "Sync comment even if not approved. Comment will have the same status at forum"
 msgstr ""
 "Синхронизировать комментарий, даже если он не одобрен. Комментарий будет "
 "иметь тот же статус на форуме"
 
-#: wpbb-sync.php:852
+#: wpbb-sync.php:900
 msgid "Create topic anyway"
 msgstr "Создать тему в любом случае"
 
-#: wpbb-sync.php:854
+#: wpbb-sync.php:902
 msgid ""
 "Create topic even if comment not approved. Will create topic "
 "<strong>without</strong> unapproved comment, only first post"
@@ -105,48 +105,48 @@ msgstr ""
 "Создавать тему на форуме, даже если комментарий не одобрен. Будет создана "
 "тема <strong>без</strong> неодобренного комментария, только с первым постом"
 
-#: wpbb-sync.php:858
+#: wpbb-sync.php:906
 msgid "First post type"
 msgstr "Тип первого поста"
 
-#: wpbb-sync.php:861
+#: wpbb-sync.php:909
 msgid "Full post"
 msgstr "Весь текст"
 
-#: wpbb-sync.php:862
+#: wpbb-sync.php:910
 msgid "Post before &lt;!--more--&gt; tag"
 msgstr "Текст до тега &lt;!--more--&gt;"
 
-#: wpbb-sync.php:863
+#: wpbb-sync.php:911
 msgid "Excerpt"
 msgstr "Выборка (Excerpt)"
 
-#: wpbb-sync.php:864
+#: wpbb-sync.php:912
 msgid "Select what text for the first post will be displayed in forum topic"
 msgstr ""
 "Выберите, какой текст для первого сообщения на форуме будет использован"
 
-#: wpbb-sync.php:868
+#: wpbb-sync.php:916
 msgid "Enable quoting"
 msgstr "Включить цитирование"
 
-#: wpbb-sync.php:870
+#: wpbb-sync.php:918
 msgid "If enabled, first post summary in bbPress will be blockquoted"
 msgstr "Если включено, первый пост в bbPress будет оформлен как цитата"
 
-#: wpbb-sync.php:874
+#: wpbb-sync.php:922
 msgid "Amount of comments to show"
 msgstr "Количество отображаемых комментариев"
 
-#: wpbb-sync.php:876
+#: wpbb-sync.php:924
 msgid "Set to <em>-1</em> to show all comments"
 msgstr "Выставьте в <em>-1</em> для отображения всех комментариев"
 
-#: wpbb-sync.php:880
+#: wpbb-sync.php:928
 msgid "Point to forum in latest comment"
 msgstr "Ссылаться на форум в последнем комментарии"
 
-#: wpbb-sync.php:882
+#: wpbb-sync.php:930
 msgid ""
 "If enabled, last comment will have link to forum discussion. Don't set "
 "previous option to 0 to use that. It is better to use template functions"
@@ -155,51 +155,62 @@ msgstr ""
 "форуме. Не устанавливайте предыдущую опцию в 0 для использования этого. "
 "Предпочтительнее использовать template functions"
 
-#: wpbb-sync.php:886
+#: wpbb-sync.php:934
 msgid "Max comments with form"
 msgstr "Максимум комментариев с формой"
 
-#: wpbb-sync.php:888
+#: wpbb-sync.php:936
 msgid "Set to <em>-1</em> to show new comment form with any comments count"
 msgstr ""
 "Выставьте в <em>-1</em> для отображения формы для комментариев в любом случае"
 
-#: wpbb-sync.php:892
+#: wpbb-sync.php:940
 msgid "PingBacks & Trackbacks"
 msgstr ""
 
-#: wpbb-sync.php:895
+#: wpbb-sync.php:943
 msgid "Disable"
 msgstr "Отключить"
 
-#: wpbb-sync.php:896
+#: wpbb-sync.php:944
 msgid "Show site url as username"
 msgstr "Использовать URL как имя пользователя"
 
-#: wpbb-sync.php:898
+#: wpbb-sync.php:946
 msgid "Select what to do with pings. URLs will be shorten to domain name"
 msgstr "Выберите, что делать с пингами. URL будут укорочены до доменного имени"
 
-#: wpbb-sync.php:902
+#: wpbb-sync.php:950
 msgid "Enable plugin"
 msgstr "Включить плагин"
 
-#: wpbb-sync.php:904
+#: wpbb-sync.php:952
 msgid "Allowed by both parts"
 msgstr "Разрешено обеими составляющими"
 
-#: wpbb-sync.php:904
+#: wpbb-sync.php:952
 msgid "Not allowed: "
 msgstr "Не разрешено: "
 
-#: wpbb-sync.php:909
+#: wpbb-sync.php:957
 msgid "Save Changes"
 msgstr "Сохранить изменения"
 
-#: wpbb-sync.php:925
+#: wpbb-sync.php:967
 msgid "Syncronize post comments with bbPress?"
 msgstr "Синхронизировать комментарии с bbPress?"
 
-#: wpbb-sync.php:976
+#: wpbb-sync.php:1018
 msgid "Please continue discussion on the forum: "
 msgstr "Продолжение дискуссии на форуме: "
+
+#: wpbb-sync.php:1088
+msgid "Synchronization with bbPress is not enabled."
+msgstr "Синхронизация с bbPress не включена."
+
+#: wpbb-sync.php:1088
+msgid ""
+"You must <a href=\"%1$s\">check options and enable plugin</a> to make it "
+"work."
+msgstr "Вы должны <a href=\"%1$s\">проверить настройки и включить плагин</a>, "
+"чтобы он начал работать."
