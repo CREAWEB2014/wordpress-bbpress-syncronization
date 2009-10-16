@@ -58,6 +58,11 @@ Made for news.vitebsk.cc
 
 == Changelog ==
 
+Version 0.8.1
+
+*  Removed some unused code
+*  Per-post setting to define topic start text
+
 Version 0.8.0 (20.09.2009)
 
 *  Spelling errors fixes

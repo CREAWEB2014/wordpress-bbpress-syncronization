@@ -220,18 +220,40 @@ function wpbb_is_enabled_for_post($post_id)
 
 function wpbb_first_topic_post_text($post)
 {
-	$type = get_option('wpbb_first_post_type');
-	if ($type == 'excerpt' && !empty($post->post_excerpt)) // excerpt cannot be empty
-		return (get_option('wpbb_quote_first_post') == 'enabled' ? '<blockquote>' : '').
-			$post->post_excerpt.
-			(get_option('wpbb_quote_first_post') == 'enabled' ? '</blockquote>' : '');
-	elseif ($type == 'full')
-		return (get_option('wpbb_quote_first_post') == 'enabled' ? '<blockquote>' : '').
-			$post->post_content.
-			(get_option('wpbb_quote_first_post') == 'enabled' ? '</blockquote>' : '');
-	else // default if option not set
-		return (get_option('wpbb_quote_first_post') == 'enabled' ? '<blockquote>' : '').
-			(strpos($post->post_content, '<!--more-->') === false ? $post->post_content : substr($post->post_content, 0, strpos($post->post_content, '<!--more-->'))).(get_option('wpbb_quote_first_post') == 'enabled' ? '</blockquote>' : '');
+	$per_post_type = get_post_meta($post->ID, 'wpbb_first_post_type', true);
+
+	if ($per_post_type == 'first_paragraphs')
+	{
+		$count = get_post_meta($post->ID, 'wpbb_first_post_paragraphs', true);
+		$content = str_replace("\r", '', $post->post_content);
+		$paragraphs = explode("\n\n", $content);
+
+		if ($count > 0 && count($paragraphs) > $count)
+			$content = implode("\n\n", array_slice($paragraphs, 0, $count));
+		else
+			$content = $post->post_content;
+	} else {
+		$type = get_option('wpbb_first_post_type');
+
+		if ($type == 'excerpt' && !empty($post->post_excerpt)) // excerpt cannot be empty
+		{
+			$content = $post->post_excerpt;
+		} elseif ($type == 'full')
+		{
+			$content = $post->post_content;
+		} else // default if option not set
+		{
+			if (strpos($post->post_content, '<!--more-->') === false)
+				$content = $post->post_content;
+			else
+				$content = substr($post->post_content, 0, strpos($post->post_content, '<!--more-->'));
+		}
+	}
+
+	if (get_option('wpbb_quote_first_post') == 'enabled')
+		$content = '<blockquote>'.$content.'</blockquote>';
+
+	return $content;
 }
 
 function wpbb_create_bb_topic(&$post)
@@ -630,12 +652,6 @@ function wpbb_check_settings()
 	return $data;
 }
 
-function wpbb_is_deep_integrated()
-{
-	// do we have another plugin part included?
-	return function_exists('bbwp_listener');
-}
-
 if (isset($_REQUEST['wpbb-listener']))
 {
 	// define redirection if request have wpbb-listener key
@@ -909,6 +925,7 @@ function wpbb_config()
 					<option value="full"<?php echo (get_option('wpbb_first_post_type') == 'full' ? ' selected="selected"':''); ?>><?php _e('Full post', 'wpbb-sync'); ?></option>
 					<option value="more_tag"<?php echo (get_option('wpbb_first_post_type') == 'more_tag' ? ' selected="selected"':''); ?>><?php _e('Post before &lt;!--more--&gt; tag', 'wpbb-sync'); ?></option>
 					<option value="excerpt"<?php echo (get_option('wpbb_first_post_type') == 'excerpt' ? ' selected="selected"':''); ?>><?php _e('Excerpt', 'wpbb-sync'); ?></option>
+					<option value="first_paragraphs"<?php echo (get_option('wpbb_first_post_type') == 'first_paragraphs' ? ' selected="selected"':''); ?>><?php _e('First paragraphs', 'wpbb-sync'); ?></option>
 				</select> (<?php _e('Select what text for the first post will be displayed in forum topic', 'wpbb-sync'); ?>)
 			</td>
 		</tr>
@@ -972,7 +989,15 @@ function wpbb_post_options()
 	{
 		$checked = 'checked="checked"';
 	}
-	echo '<input type="checkbox" name="wpbb_sync_comments" '.$checked.' />'; 
+	echo '<input type="checkbox" name="wpbb_sync_comments" '.$checked.' />';
+
+	if (get_option('wpbb_first_post_type') == 'first_paragraphs')
+	{
+		echo '<br/>';
+		echo '<input type="hidden" name="wpbb_first_post_type" value="first_paragraphs" />';
+		echo __('Paragraphs count to start new topic with: ').'<input type="text" size=1 name="wpbb_first_post_paragraphs" value="2" />';
+	}
+ 
 	// additional checks for checkbox above presenсe
 	echo '<input type="hidden" name="wpbb_sync_comments_presenсe" value="yes" />';
 	echo '</p></div></div>';
@@ -986,6 +1011,10 @@ function wpbb_store_post_options($post_id)
 	{
 		$value = $_POST['wpbb_sync_comments'] == 'on' ? 'yes' : 'no';
 		update_post_meta($post_id, 'wpbb_sync_comments', $value);
+		if (isset($_POST['wpbb_first_post_type']))
+			update_post_meta($post_id, 'wpbb_first_post_type', $_POST['wpbb_first_post_type']);
+		if (isset($_POST['wpbb_first_post_paragraphs']))
+			update_post_meta($post_id, 'wpbb_first_post_paragraphs', (int) $_POST['wpbb_first_post_paragraphs']);
 	}
 }
 
